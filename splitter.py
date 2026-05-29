@@ -10,7 +10,7 @@ class VideoSplitter:
             self, input_path: str, 
             parts_to_split: int, 
             output_dir: str = None
-            ):
+            ) -> None:
         
         self.input_path: str = input_path
         self.parts_to_split: int = parts_to_split
@@ -24,7 +24,7 @@ class VideoSplitter:
 
     def split(self) -> list[str]:
         audio: AudioSegment = self._load_audio()
-        chunk_ms: int = len(audio)
+        chunk_ms: int = len(audio) // self.parts_to_split
         base_name: str = self._get_base_name()
         output_paths: list[str] = []
 
@@ -33,7 +33,7 @@ class VideoSplitter:
 
         for i in range(self.parts_to_split):
             start = i * chunk_ms
-            end = self._init_end_time_to_split()
+            end = self._init_end_time_to_split(i, start, chunk_ms, audio)
             
             chunk: AudioSegment = audio[start:end]
             out_path: str = self._create_output_path(base_name, i, chunk)
