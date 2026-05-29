@@ -33,11 +33,7 @@ class VideoSplitter:
 
         for i in range(self.parts_to_split):
             start = i * chunk_ms
-
-            if (i < self.parts_to_split - 1):
-                end = start + chunk_ms
-            else:
-                end = len(audio)
+            end = self._init_end_time_to_split()
             
             chunk: AudioSegment = audio[start:end]
             out_path: str = self._create_output_path(base_name, i, chunk)
@@ -67,3 +63,10 @@ class VideoSplitter:
             return os.path.dirname(self.input_path)
         return output_dir
     
+    def _init_end_time_to_split(self, 
+                                index: int, start: int, 
+                                chunk_ms: int, audio: AudioSegment
+                                ) -> int:
+        if (index < self.parts_to_split - 1):
+            return start + chunk_ms
+        return len(audio)
