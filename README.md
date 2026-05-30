@@ -27,12 +27,12 @@ The tool features a robust interactive REPL with automated rate-limit handling, 
 ## Features
 
 - **Multi-Language Support**: Transcribe or translate into English or Hebrew.
+- **Automated Organization**: Output files are automatically categorized into `output/English/` or `output/Hebrew/`.
 - **Automatic Video Splitting**: Handles long lectures by splitting them into 20-minute MP3 chunks.
 - **Rate-Limit Handling**: Automatically detects `429 RESOURCE_EXHAUSTED` errors and retries with backoff.
 - **Dynamic Model Selection**: List and switch between Gemini models (Flash/Pro) mid-session.
-- **Session Tracking**: Monitor token usage across multiple commands.
+- **Smart Launcher**: Custom `./Transcriber` script that checks dependencies and activates your virtual environment automatically.
 - **Graceful Interrupts**: Cleanly handle `Ctrl+C` with guaranteed cleanup of temporary files.
-- **Professional Architecture**: Clean Command pattern with a centralized Orchestrator and package facades.
 
 ---
 
@@ -61,7 +61,7 @@ To use Transcriber, you need a Google Gemini API key.
 1. **Get your API Key**:
    - Visit [Google AI Studio](https://aistudio.google.com/app/apikey).
    - Sign in with your Google account.
-   - Click **"Create API key"** (or use an existing one).
+   - Click **"Create API key"**.
    - Copy your unique API key.
 
 2. **Create the .env file**:
@@ -76,9 +76,9 @@ To use Transcriber, you need a Google Gemini API key.
 
 ## Usage
 
-Start the interactive session:
+Start the interactive session using the global launcher:
 ```bash
-python main.py
+./Transcriber
 ```
 
 ### Commands
@@ -90,34 +90,11 @@ python main.py
 | `translate <path> [lang]` | Translate text. Default: Hebrew (`he`), supports English (`en`) |
 | `models` | List all available Gemini models |
 | `use <model>` | Switch the active model (e.g., `gemini-1.5-flash`) |
+| `current` | Show the currently active Gemini model |
 | `usage` | Show session token count and API status |
+| `clear` | Clear the console screen and redisplay the banner |
 | `help` | Show all available commands |
 | `exit` | Exit the application |
-
-### Example Workflow
-
-```
->>> load
-API Key loaded successfully!
->>> transcribe lecture.mp4 he
-Splitting 'lecture.mp4'...
-Transcribing into HEBREW...
-Created the output at output/lecture_heb.txt
->>> usage
-Total session usage so far: 15420 tokens.
-```
-
----
-
-## Output Format
-
-Transcriptions include `[MM:SS]` timestamps and speaker labels (`**Lecturer:**` or `**מרצה:**`). 
-
-**English Example:**
-```
-**Lecturer:** `[02:15]`
-As we discussed last week, the scheduler is responsible for...
-```
 
 ---
 
