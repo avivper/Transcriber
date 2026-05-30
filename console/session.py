@@ -32,7 +32,7 @@ class Session:
 
     def _init_launch(self) -> None:
         self.state.running = True
-        print(self.BANNER)
+        print(BANNER)
         print('Type "help" to see available commands.\n')
 
     def _execute_commands(self, raw: str) -> None:
@@ -42,21 +42,7 @@ class Session:
         command: Command | None = self.commands.get(name)
 
         if command is None:
-            print(f"Unkown command: {name}")
-            return
-        
-        self._execute(command, args)
-    
-    def _execute(self, command: Command, args: list[str]) -> None:
-        try: 
-            command.execute(self.state, args)
-        except CommandError as e:
-            # Catch known user/validation errors gracefully
-            print(f"Command Error: {e}")
-        except Exception as e:
-            # Catch unexpected fatal crashes (like network failures or deep bugs)
-            print(f"An unexpected system error occurred: {e}")    if command is None:
-            print(f"Unkown command: {name}")
+            print(f"Unknown command: {name}")
             return
         
         self._execute(command, args)
