@@ -50,11 +50,27 @@ The tool features a robust interactive REPL with automated rate-limit handling, 
    brew install ffmpeg  # Required for audio processing
    ```
 
-3. **Set up API Key**
-   Create a `.env` file in the project root:
-   ```
-   GEMINI_API_KEY=your_api_key_here
-   ```
+---
+
+## Configuration
+
+### API Setup Guide
+
+To use Transcriber, you need a Google Gemini API key.
+
+1. **Get your API Key**:
+   - Visit [Google AI Studio](https://aistudio.google.com/app/apikey).
+   - Sign in with your Google account.
+   - Click **"Create API key"** (or use an existing one).
+   - Copy your unique API key.
+
+2. **Create the .env file**:
+   - In the project's root directory, create a new file named `.env`.
+   - Add your key to the file using this exact format:
+     ```env
+     GEMINI_API_KEY=your_actual_key_here
+     ```
+   - Save and close the file.
 
 ---
 
