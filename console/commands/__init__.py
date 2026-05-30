@@ -1,3 +1,8 @@
+"""
+Command package containing individual REPL command handlers.
+Exposes the base Command class, decorators, and all supported command implementations.
+"""
+
 from .command import Command, requires_key
 from .load_command import LoadCommand
 from .transcribe_command import TranscribeCommand
