@@ -1,5 +1,6 @@
-from console import AppState, CommandError
-from console.commands import Command, requires_key
+from console.app_state import AppState
+from console.exceptions import CommandError
+from .command import Command, requires_key
 from agents import Transcriber, TranscribedData, AgentFactory
 from agents.models import Model, ModelFactory
 from utils import VideoSplitter, TextWriter, TextProcessor
@@ -58,7 +59,10 @@ class TranscribeCommand(Command):
             lang_code: str, prompt_path: str
             ) -> dict[str, str]:
         transcriber: Transcriber = self._init_transcriber_agent(state, lang_code, prompt_path)
-        print(f"\nTranscribing {len(audio_paths)} parts...")
+        
+        target_lang: str = "Hebrew" if lang_code == "he" else "English"
+        print(f"\n[Process] Starting transcription of {len(audio_paths)} parts into {target_lang}...")
+        
         transcribed_data: TranscribedData = transcriber.transcribe_files(audio_paths)
         results: dict[str, str] = transcribed_data[0]
         tokens_used: int = transcribed_data[1]

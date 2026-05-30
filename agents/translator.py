@@ -1,6 +1,6 @@
 import os
 from google import genai
-from agents.models import Model
+from .models import Model
 from typing import TypeAlias, Tuple
 from .orchestrator import language_prompt
 

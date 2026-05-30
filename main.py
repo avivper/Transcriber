@@ -1,6 +1,4 @@
 """Entry point — starts the interactive Transcriber console session."""
-
-import sys
 from console import Session
 
 if __name__ == "__main__":

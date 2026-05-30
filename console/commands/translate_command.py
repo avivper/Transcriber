@@ -1,5 +1,6 @@
-from console import AppState, CommandError
-from console.commands import Command, requires_key
+from console.app_state import AppState
+from console.exceptions import CommandError
+from .command import Command, requires_key
 from agents import Translator, TranslatedData, AgentFactory
 from agents.models import Model, ModelFactory
 from utils import TextWriter, TextProcessor
@@ -56,7 +57,10 @@ class TranslateCommand(Command):
             lang_code: str, prompt_path: str
             ) -> list[str]:
         translator: Translator = self._init_translator_agent(state, lang_code, prompt_path)
-        print(f"Translating into {lang_code.upper()}...")
+        
+        target_lang: str = "English" if lang_code == "en" else "Hebrew"
+        print(f"\n[Process] Starting translation of content into {target_lang}...")
+        
         translated_data: TranslatedData = translator.translate_from_file(input_path)
         translated_text: str = translated_data[0]
         tokens_used: int = translated_data[1]

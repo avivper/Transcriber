@@ -1,5 +1,5 @@
-from console import AppState
-from console.commands import Command
+from console.app_state import AppState
+from .command import Command
 
 class HelpCommand(Command):
     """Prints all available commands with their usage and description."""

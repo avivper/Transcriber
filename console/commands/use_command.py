@@ -1,5 +1,6 @@
-from console import AppState
-from console.commands import Command, requires_key, ModelsCommand
+from console.app_state import AppState
+from .command import Command, requires_key
+from .models_command import ModelsCommand
 from google import genai
 
 class UseCommand(Command):

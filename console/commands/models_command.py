@@ -1,5 +1,5 @@
-from console import AppState
-from console.commands import Command, requires_key
+from console.app_state import AppState
+from .command import Command, requires_key
 from google import genai
 
 class ModelsCommand(Command):

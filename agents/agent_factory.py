@@ -1,4 +1,4 @@
-from agents.models import Model
+from .models import Model
 from .transcriber import Transcriber
 from .translator import Translator
 from typing import TypeAlias 

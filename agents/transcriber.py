@@ -1,7 +1,7 @@
 from google import genai
 import os
 from typing import TypeAlias, Tuple
-from agents.models import Model
+from .models import Model
 from .orchestrator import language_prompt
 
 File: TypeAlias = genai.types.File

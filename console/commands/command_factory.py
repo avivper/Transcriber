@@ -1,7 +1,12 @@
-from console.commands import (
-    Command, LoadCommand, TranscribeCommand, ExitCommand, 
-    TranslateCommand, HelpCommand, UsageCommand, ModelsCommand, UseCommand
-)
+from .command import Command
+from .load_command import LoadCommand
+from .transcribe_command import TranscribeCommand
+from .exit_command import ExitCommand
+from .translate_command import TranslateCommand
+from .help_command import HelpCommand
+from .usage_command import UsageCommand
+from .models_command import ModelsCommand
+from .use_command import UseCommand
 
 class CommandFactory:
     """Central factory to manage and initialize all available commands."""

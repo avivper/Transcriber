@@ -1,7 +1,7 @@
-from console.app_state import AppState
-from console.commands.command import Command
-from console.commands.command_factory import CommandFactory
-from console.exceptions import CommandError
+from .app_state import AppState
+from .exceptions import CommandError
+from .commands import Command
+from .commands.command_factory import CommandFactory
 
 
 class Session:

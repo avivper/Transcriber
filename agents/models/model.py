@@ -21,7 +21,7 @@ class Model:
     MAX_RETRIES: int = 3
 
     def __init__(self, api_key: str, prompt_path: str, model_type: str = MODEL) -> None:
-        self.client: Model = genai.Client(api_key=api_key)
+        self.client: genai.Client = genai.Client(api_key=api_key)
         self.prompt: str = self._load_prompt_path(prompt_path)
         self.model_type = model_type
 
