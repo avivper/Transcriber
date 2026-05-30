@@ -4,10 +4,13 @@ from dotenv import load_dotenv
 
 @dataclass(frozen=True)
 class Config:
+    """Immutable application configuration loaded from environment variables."""
+
     api_key: str
 
     @classmethod
     def load(cls) -> "Config":
+        """Load config from .env or environment. Raises ValueError if GEMINI_API_KEY is missing."""
         load_dotenv()
         api_key = os.getenv("GEMINI_API_KEY")
 

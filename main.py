@@ -1,3 +1,5 @@
+"""Entry point — starts the interactive Transcriber console session."""
+
 import sys
 from console.session import Session
 
