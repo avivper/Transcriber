@@ -1,8 +1,23 @@
+"""
+Command for displaying Gemini API token usage and rate limit status.
+"""
+
 from console.app_state import AppState
 from .command import Command
 
 class UsageCommand(Command):
+    """
+    Handles the 'usage' CLI command.
+    Prints cumulative session usage and active lockout timers.
+    """
     def execute(self, state: AppState, args: list[str] = None) -> None:
+        """
+        Executes the usage report.
+        
+        Args:
+            state: Global application state.
+            args: Optional command arguments (ignored).
+        """
         print(f"Total session usage so far: {state.total_tokens_used} tokens.")
         
         state.check_rate_limit()
@@ -11,4 +26,3 @@ class UsageCommand(Command):
             print(f"API Quota/Rate Limit reached. Please wait {wait_time} seconds before next request.")
         else:
             print("API Status: Ready")
-        

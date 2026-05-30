@@ -3,7 +3,6 @@ Agent responsible for translating transcription text between supported languages
 Leverages the Gemini API to maintain natural phrasing and preserve formatting.
 """
 
-import os
 from google import genai
 from .models import Model
 from typing import TypeAlias, Tuple

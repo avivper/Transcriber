@@ -1,3 +1,8 @@
+"""
+Command for transcribing video/audio files into text using Gemini.
+Supports multi-language transcription and automatic file splitting.
+"""
+
 from console.app_state import AppState
 from console.exceptions import CommandError
 from .command import Command, requires_key
@@ -11,12 +16,27 @@ import time
 import re
 
 class TranscribeCommand(Command):
+    """
+    Handles the 'transcribe' CLI command workflow.
+    
+    Attributes:
+        OUTPUT_DIR: Base directory for transcription output.
+        RESOURCE_EXHAUSTED: HTTP status code for rate limiting.
+        WAIT_TIME: Default retry delay in seconds.
+    """
     OUTPUT_DIR: str = "output"
     RESOURCE_EXHAUSTED: int = 429
     WAIT_TIME: int = 60
 
     @requires_key
     def execute(self, state: AppState, args: list[str] = None) -> None:
+        """
+        Executes the transcription process.
+        
+        Args:
+            state: Global application state.
+            args: Command arguments [input_path, optional_lang].
+        """
         try:
             self._rate_limit_checks(state)
             user_input: Tuple[str,str] = self._get_args(args)
@@ -33,6 +53,7 @@ class TranscribeCommand(Command):
             raise e
     
     def _handle_rate_limit(self, state: AppState, e: APIError) -> None:
+        """Updates state with rate limit info and calculates wait time."""
         state.is_rate_limited = True
         match = re.search(r"retry in ([\d.]+)s", str(e))
         wait_time: int = self.WAIT_TIME
@@ -42,12 +63,14 @@ class TranscribeCommand(Command):
         print(f"Rate limit hit. Application will wait for {wait_time}s.")
     
     def _split_videos_to_audios(self, input_path: str) -> list[str]:
+        """Orchestrates the splitting of the input video into audio chunks."""
         print(f"Splitting '{input_path}'...")
         video_splitter: VideoSplitter = VideoSplitter(input_path)
         print(f"Video duration: {video_splitter.duration_ms / 1000:.1f}s")
         return self._get_audio_parts(video_splitter)
     
     def _get_audio_parts(self, video_splitter: VideoSplitter) -> list[str]:
+        """Retrieves and prints the list of generated audio part paths."""
         parts: list[str] = video_splitter.split()
         print(f"\nCreated {len(parts)} parts:")
         for path in parts:
@@ -58,6 +81,7 @@ class TranscribeCommand(Command):
             self, audio_paths: list[str], state: AppState, 
             lang_code: str, prompt_path: str
             ) -> dict[str, str]:
+        """Initializes the agent and transcribes all audio chunks."""
         transcriber: Transcriber = self._init_transcriber_agent(state, lang_code, prompt_path)
         
         target_lang: str = "Hebrew" if lang_code == "he" else "English"
@@ -70,6 +94,7 @@ class TranscribeCommand(Command):
         return results
     
     def _write_output_to_files(self, data: dict[str, str], input_path: str, lang_code: str) -> None:
+        """Processes transcription data and writes it to language-specific subfolders."""
         folder_name: str = "English" if lang_code == "en" else "Hebrew"
         target_dir: str = os.path.join(self.OUTPUT_DIR, folder_name)
         text_writer: TextWriter = TextWriter(target_dir)
@@ -79,6 +104,7 @@ class TranscribeCommand(Command):
         print(f"Created the output at {output_file_path}")
 
     def _clean_up_audio_files(self, audio_paths: list[str]) -> None:
+        """Deletes temporary audio chunks from disk."""
         for path in audio_paths:
             os.remove(path)
         print(f"Removed {len(audio_paths)} temporary audio file(s).")
@@ -87,6 +113,7 @@ class TranscribeCommand(Command):
             self, input_path: str, state: AppState, 
             lang_code: str, prompt_path: str
             ) -> None:
+        """High-level orchestration of split, transcribe, write, and cleanup."""
         audio_paths: list[str] = []
         try:
             audio_paths = self._split_videos_to_audios(input_path)
@@ -100,12 +127,14 @@ class TranscribeCommand(Command):
 
     @staticmethod
     def _get_processed_data(data: dict[str, str]) -> list[str]:
+        """Reflows and formats raw transcription text."""
         values: list[str] = list(data.values())
         text_processor: TextProcessor = TextProcessor(values)
         return text_processor.process()
     
     @staticmethod
     def _get_file_name(input_path: str, lang_code: str) -> str:
+        """Generates the output filename with the appropriate language suffix."""
         original_name: str = os.path.basename(input_path)
         stem: str = os.path.splitext(original_name)[0]
         suffix: str = "heb" if lang_code == "he" else "eng"
@@ -113,6 +142,7 @@ class TranscribeCommand(Command):
     
     @staticmethod
     def _rate_limit_checks(state: AppState) -> None:
+        """Blocks execution if the global rate limit state is active."""
         state.check_rate_limit()
         if state.is_rate_limited:
             wait_time = state.get_remaining_wait_time()
@@ -120,8 +150,9 @@ class TranscribeCommand(Command):
         
     @staticmethod
     def _get_args(args: list[str]) -> Tuple[str, str]:
+        """Parses and validates command-line arguments for transcription."""
         if not args:
-            raise CommandError("Missing required argument. Usage: transcribe <input_path>")
+            raise CommandError("Usage: transcribe <input_path> [en|he]")
         input_path: str = args[0]
         lang: str = args[1].lower() if len(args) > 1 else "en"
         if lang not in ["en", "he", "hebrew", "english"]:
@@ -131,13 +162,14 @@ class TranscribeCommand(Command):
     
     @staticmethod
     def _check_path(input_path: str) -> bool:
+        """Validates that the input file exists on disk."""
         if not os.path.exists(input_path):
             raise CommandError(f"The file '{input_path}' doesn't exist.")
         return True
     
     @staticmethod
     def _init_transcriber_agent(state: AppState, lang_code: str, prompt_path: str) -> Transcriber:
+        """Initializes a language-aware Transcriber agent."""
         model: Model = ModelFactory(state.api_key, prompt_path, state.current_model).init_llm_model()
         agent_factory: AgentFactory = AgentFactory()
         return agent_factory.init_agent(model, agent_factory.TRANSCRIBER, lang_code)
-    

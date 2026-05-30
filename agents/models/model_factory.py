@@ -3,7 +3,6 @@ Factory class for initializing configured Model instances.
 """
 
 from .model import Model
-import os
 
 class ModelFactory:
     """
