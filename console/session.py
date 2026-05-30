@@ -34,14 +34,18 @@ class Session:
     
     def run(self) -> None:
         """Print the banner and start the command loop until exit is called."""
-        print(self.BANNER)
-        print('Type "help" to see available commands.\n')
-        self.state.running = True
+        self._init_launch()
         while self.state.running:
             raw: str = input(self.COMMAND_ENTRY).strip()
             if not raw:
                 continue
             self._execute_commands(raw)
+
+    def _init_launch(self) -> None:
+        self.state.running = True
+        print(self.BANNER)
+        print('Type "help" to see available commands.\n')
+
     
     def _execute_commands(self, raw: str) -> None:
         parts: list[str] = raw.split()
