@@ -3,6 +3,7 @@ import math
 from pydub import AudioSegment
 
 class VideoSplitter:
+    """Splits an MP4 video file into equal-length MP3 audio chunks."""
     MP4_FORMAT: str = "mp4"
     MP3_FORMAT: str = "mp3"
     MS_PER_MINUTE: int = 60 * 1000
@@ -19,15 +20,18 @@ class VideoSplitter:
         self.output_dir: str = self._set_output_dir(output_dir)
     
     def get_parts_to_split(self) -> int:
+        """Return the number of chunks the audio will be split into."""
         audio: AudioSegment = self._load_audio()
         total_ms: int = len(audio)
         return self._get_number_of_parts(total_ms)
     
     @property
-    def duration_ms(self) -> int: 
+    def duration_ms(self) -> int:
+        """Total audio duration in milliseconds."""
         return len(self._load_audio())
     
     def split(self) -> list[str]:
+        """Split the audio into chunks and return their output file paths."""
         audio: AudioSegment = self._load_audio()
         total_ms: int = len(audio)
         base_name: str = self._get_base_name()

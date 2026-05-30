@@ -1,6 +1,7 @@
 from pathlib import Path
 
 class TextWriter:
+    """Writes processed text data to .txt files in a specified output directory."""
     TXT_EXTENSION: str = ".txt"
     DEFAULT_ENCODING: str = "utf-8"
     SEPARATOR: str = "\n\n"
@@ -15,6 +16,7 @@ class TextWriter:
         self._ensure_dir(self.output_dir)
 
     def write_list(self, data: list[str], filename: str) -> str:
+        """Join entries with a blank-line separator and write to a .txt file. Returns the output path."""
         file_path: Path = self.output_dir / self._ensure_extension(filename)
         content: str = self.SEPARATOR.join(data)
         

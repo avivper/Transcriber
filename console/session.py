@@ -7,6 +7,7 @@ from console.commands.translate_command import TranslateCommand
 from console.exceptions import CommandError
 
 class Session:
+    """Interactive REPL that reads commands from stdin and dispatches them to registered Command handlers."""
     COMMAND_ENTRY: str = ">>> "
     BANNER: str = r"""
 +--------------------------------------------------------------+
@@ -30,6 +31,7 @@ class Session:
         }
     
     def run(self) -> None:
+        """Print the banner and start the command loop until exit is called."""
         print(self.BANNER)
         self.state.running = True
         while self.state.running:
