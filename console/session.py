@@ -4,6 +4,7 @@ from console.commands.load_command import LoadCommand
 from console.commands.transcribe_command import TranscribeCommand
 from console.commands.exit_command import ExitCommand
 from console.commands.translate_command import TranslateCommand
+from console.exceptions import CommandError
 
 class Session:
     COMMAND_ENTRY: str = ">>> "
@@ -42,7 +43,19 @@ class Session:
         name: str = parts[0]
         args: list[str] = parts[1:]
         command: Command | None = self.commands.get(name)
+
         if command is None:
             print(f"Unkown command: {name}")
-        else:
+            return
+        
+        self._execute(command, args)
+    
+    def _execute(self, command: Command, args: list[str]) -> None:
+        try: 
             command.execute(self.state, args)
+        except CommandError as e:
+            # Catch known user/validation errors gracefully
+            print(f"Command Error: {e}")
+        except Exception as e:
+            # Catch unexpected fatal crashes (like network failures or deep bugs)
+            print(f"An unexpected system error occurred: {e}")

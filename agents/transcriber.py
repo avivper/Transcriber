@@ -1,17 +1,15 @@
 from google import genai
 import os
-from typing import  TypeAlias
-from agents.model import Model
+from typing import TypeAlias
+from agents.models.model import Model
 
 File: TypeAlias = genai.types.File
 
 class Transcriber:
     AUDIO_PROCESSOR: str = "audio"
-    PROMPT_PATH: str = "prompts/transcription_agent.md"
 
-    def __init__(self, api_key: str, prompt_path: str = None) -> None:
-        prompt: str = self._determine_prompt(prompt_path)
-        self.model: Model = Model(api_key=api_key, prompt_path=prompt)
+    def __init__(self, model: Model) -> None:
+        self.model: Model = model
         # self.client = genai.Client(api_key=api_key)
 
     def transcribe(self, audio_path: str) -> str:
@@ -26,9 +24,3 @@ class Transcriber:
         for path in audio_paths:
             result[path] = self.transcribe(path)
         return result
-
-    def _determine_prompt(self, prompt_path: str) -> str:
-        if prompt_path is None:
-            return os.path.join(os.path.dirname(__file__), self.PROMPT_PATH)
-        return prompt_path
-

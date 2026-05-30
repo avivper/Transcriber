@@ -1,17 +1,15 @@
 import os
 from google import genai
-from agents.model import Model
+from agents.models.model import Model
 from typing import TypeAlias
 
 File: TypeAlias = genai.types.File
 
 class Translator:
     TEXT_PROCESSOR: str = "text"
-    PROMPT_PATH: str = "prompts/translation_agent.md"
 
-    def __init__(self, api_key: str, prompt_path: str = None) -> None:
-        prompt: str = self._determine_prompt(prompt_path)
-        self.model: Model = Model(api_key=api_key, prompt_path=prompt)
+    def __init__(self, model: Model) -> None:
+        self.model: Model = model
 
     def translate_from_file(self, text_path: str) -> str:
         file_name: str = os.path.basename(text_path)
@@ -32,15 +30,3 @@ class Translator:
             content_to_llm: list[str] = [prompt, data_to_translate]
             result.append(self.model.get_data(content_to_llm))
         return result
-    
-    def _determine_prompt(self, prompt_path: str) -> str:
-        if prompt_path is None:
-            return os.path.join(os.path.dirname(__file__), self.PROMPT_PATH)
-        return prompt_path
-    
-    @staticmethod 
-    def _get_data_to_translate(data: dict[str, str]) -> list[str]: 
-        data_to_translate: list[str] = []
-        for text_file in data:
-            data_to_translate.append(data[text_file])
-        return data_to_translate

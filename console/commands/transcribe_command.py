@@ -1,19 +1,33 @@
 from console.commands.command import Command, requires_key
 from agents.transcriber import Transcriber
+from agents.models.model import Model
+from agents.models.model_factory import ModelFactory
+from console.exceptions import CommandError
 from console.app_state import AppState
 from utils.splitter import VideoSplitter
 from utils.textwriter import TextWriter
+import os
+
 
 class TranscribeCommand(Command):
     OUTPUT_DIR: str = "output"
+    PROMPT_PATH: str = "prompts/transcription_agent.md"
 
     @requires_key
     def execute(self, state: AppState, args: list[str]) -> None:
-        if (args is None or len(args) == 0):
-            # TODO: raise error
-            print("Error") 
+        if not args:
+            raise CommandError("Missing required argument. Usage: transcribe <input_path>")
+        
         input_path: str = args[0]
+
+        if not os.path.exists(input_path):
+            raise CommandError(f"The file '{input_path} doesn't exists.")
+
         self._create_transcribed_output(input_path, state)
+    
+    def _init_transcriber_agent(self, api_key: str) -> Transcriber:
+        model: Model = ModelFactory(api_key, self.PROMPT_PATH).init_llm_model()
+        return Transcriber(model)
     
     def _split_videos_to_audios(self, input_path: str) -> list[str]:
         print(f"Splitting '{input_path}'...")
@@ -29,7 +43,7 @@ class TranscribeCommand(Command):
         return parts
     
     def _transcribe_audios(self, audio_paths: list[str], api_key: str) -> dict[str, str]:
-        transcriber: Transcriber = Transcriber(api_key)
+        transcriber: Transcriber = self._init_transcriber_agent(api_key)
         print(f"\nTranscribing {len(audio_paths)} parts...")
         results: dict[str, str] = transcriber.transcribe_files(audio_paths)
         return results
@@ -39,7 +53,13 @@ class TranscribeCommand(Command):
         output_file_path: str = text_writer.write_dict(data, input_path)
         print(f"Created the output at {output_file_path}")
 
+    def _clean_up_audio_files(self, audio_paths: list[str]) -> None:
+        for path in audio_paths:
+            os.remove(path)
+        print(f"Removed {len(audio_paths)} temporary audio file(s).")
+
     def _create_transcribed_output(self, input_path: str, state: AppState) -> None:
         audio_paths: list[str] = self._split_videos_to_audios(input_path)
         transcribed_data: dict[str, str] = self._transcribe_audios(audio_paths, state.api_key)
         self._write_output_to_files(transcribed_data, input_path)
+        self._clean_up_audio_files(audio_paths)
