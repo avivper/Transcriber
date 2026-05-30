@@ -4,6 +4,7 @@ from console.commands.load_command import LoadCommand
 from console.commands.transcribe_command import TranscribeCommand
 from console.commands.exit_command import ExitCommand
 from console.commands.translate_command import TranslateCommand
+from console.commands.help_command import HelpCommand
 from console.exceptions import CommandError
 
 class Session:
@@ -27,12 +28,14 @@ class Session:
             "exit": ExitCommand(),
             "load" : LoadCommand(),
             "transcribe": TranscribeCommand(),
-            "translate": TranslateCommand()
+            "translate": TranslateCommand(),
+            "help": HelpCommand()
         }
     
     def run(self) -> None:
         """Print the banner and start the command loop until exit is called."""
         print(self.BANNER)
+        print('Type "help" to see available commands.\n')
         self.state.running = True
         while self.state.running:
             raw: str = input(self.COMMAND_ENTRY).strip()
