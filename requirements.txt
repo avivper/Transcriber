@@ -1,0 +1,16 @@
+# Core dependencies for the video transcription/translation pipeline
+
+# Google Gemini SDK — used in model.py, transcriber.py, translator.py
+# (imported as `from google import genai`)
+google-genai
+
+# Audio/video processing — used in splitter.py
+# (imported as `from pydub import AudioSegment`)
+# NOTE: pydub requires ffmpeg installed on the system separately:
+#   macOS:        brew install ffmpeg
+#   Ubuntu/Debian: sudo apt install ffmpeg
+pydub
+
+# Environment variable loading — used in config.py
+# (imported as `from dotenv import load_dotenv`)
+python-dotenv
