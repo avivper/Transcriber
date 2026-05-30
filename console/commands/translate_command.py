@@ -64,7 +64,9 @@ class TranslateCommand(Command):
         return [translated_text]
 
     def _write_output_data(self, data: list[str], input_path: str, lang_code: str) -> None:
-        text_writer: TextWriter = TextWriter(self.OUTPUT_DIR)
+        folder_name: str = "English" if lang_code == "en" else "Hebrew"
+        target_dir: str = os.path.join(self.OUTPUT_DIR, folder_name)
+        text_writer: TextWriter = TextWriter(target_dir)
         file_name: str = self._get_file_name(input_path, lang_code)
         processor: TextProcessor = TextProcessor(data).process()
         output_file_path: str = text_writer.write_list(processor, file_name)

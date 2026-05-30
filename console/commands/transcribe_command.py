@@ -66,7 +66,9 @@ class TranscribeCommand(Command):
         return results
     
     def _write_output_to_files(self, data: dict[str, str], input_path: str, lang_code: str) -> None:
-        text_writer: TextWriter = TextWriter(self.OUTPUT_DIR)
+        folder_name: str = "English" if lang_code == "en" else "Hebrew"
+        target_dir: str = os.path.join(self.OUTPUT_DIR, folder_name)
+        text_writer: TextWriter = TextWriter(target_dir)
         processed: list[str] = self._get_processed_data(data)
         file_name: str = self._get_file_name(input_path, lang_code)
         output_file_path: str = text_writer.write_list(processed, file_name)
