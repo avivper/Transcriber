@@ -9,7 +9,7 @@ class UseCommand(Command):
     DEFAULT: str = "default"
 
     @requires_key
-    def execute(self, state: AppState, args: list[str]) -> None:
+    def execute(self, state: AppState, args: list[str] = None) -> None:
         if not args:
             print(f"Current model: {state.current_model}")
             print("Usage: use <model_name>")
