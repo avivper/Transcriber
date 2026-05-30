@@ -36,6 +36,8 @@ The tool features a robust interactive REPL with automated rate-limit handling, 
 
 ---
 
+---
+
 ## Installation
 
 1. **Clone the repository**
@@ -49,6 +51,14 @@ The tool features a robust interactive REPL with automated rate-limit handling, 
    pip install -r requirements.txt
    brew install ffmpeg  # Required for audio processing
    ```
+
+3. **Make it a Global Command (Optional but Recommended)**
+   To run `Transcriber` from any directory on your system:
+   ```bash
+   chmod +x Transcriber
+   sudo ln -sf "$(pwd)/Transcriber" /usr/local/bin/Transcriber
+   ```
+   Now you can simply type `Transcriber` in any terminal window to start the app.
 
 ---
 
