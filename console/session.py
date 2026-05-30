@@ -46,7 +46,6 @@ class Session:
         print(self.BANNER)
         print('Type "help" to see available commands.\n')
 
-    
     def _execute_commands(self, raw: str) -> None:
         parts: list[str] = raw.split()
         name: str = parts[0]
