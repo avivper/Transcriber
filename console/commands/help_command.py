@@ -14,8 +14,8 @@ class HelpCommand(Command):
     use <model_name>        Switch to a different Gemini model
     current                 Show the currently active Gemini model
     help                    Show this help message
-    usage                   display the total tokens that used during this current session
     clear                   Clear the console screen
+    usage                   Display the total tokens used during the current session
     exit                    Exit the application
     
     Supported languages: en (English), he (Hebrew)

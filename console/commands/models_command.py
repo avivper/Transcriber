@@ -31,8 +31,8 @@ class ModelsCommand(Command):
         print("-" * 70)
         try:
             for model in client.models.list():
-                name: str = model.display_name
-                actions: str = ", ".join(model.supported_actions)
+                name: str = model.name
+                actions: str = ", ".join(model.supported_generation_methods)
                 print(f"{name:<40} | {actions}")
         except Exception as e:
             print(f"An error occurred: {e}")
