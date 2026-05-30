@@ -1,7 +1,7 @@
 import os
-from console import AppState
-from console.commands import Command
-from console.constants import BANNER
+from console.app_state import AppState
+from .command import Command
+from ..constants import BANNER
 
 class ClearCommand(Command):
     """Clears the console screen and redisplays the application banner."""

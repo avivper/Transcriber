@@ -8,3 +8,4 @@ from .usage_command import UsageCommand
 from .models_command import ModelsCommand
 from .use_command import UseCommand
 from .clear_command import ClearCommand
+from .current_command import CurrentCommand

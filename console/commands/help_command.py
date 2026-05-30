@@ -12,6 +12,7 @@ class HelpCommand(Command):
     translate <path> [lang]  Translate a transcription file (Default: he)
     models                  List available Gemini models
     use <model_name>        Switch to a different Gemini model
+    current                 Show the currently active Gemini model
     help                    Show this help message
     usage                   display the total tokens that used during this current session
     clear                   Clear the console screen
