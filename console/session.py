@@ -1,12 +1,8 @@
 from console.app_state import AppState
 from console.commands.command import Command
-from console.commands.load_command import LoadCommand
-from console.commands.transcribe_command import TranscribeCommand
-from console.commands.exit_command import ExitCommand
-from console.commands.translate_command import TranslateCommand
-from console.commands.help_command import HelpCommand
-from console.commands.usage_command import UsageCommand
+from console.commands.command_factory import CommandFactory
 from console.exceptions import CommandError
+
 
 class Session:
     """Interactive REPL that reads commands from stdin and dispatches them to registered Command handlers."""
@@ -25,23 +21,23 @@ class Session:
     def __init__(self) -> None:
         self.state = AppState()
         self.running: bool = False
-        self.commands: dict[str, Command] = {
-            "exit": ExitCommand(),
-            "load" : LoadCommand(),
-            "transcribe": TranscribeCommand(),
-            "translate": TranslateCommand(),
-            "help": HelpCommand(),
-            "usage": UsageCommand()
-        }
+        self.commands: dict[str, Command] = CommandFactory.get_commands()
     
     def run(self) -> None:
         """Print the banner and start the command loop until exit is called."""
         self._init_launch()
         while self.state.running:
-            raw: str = input(self.COMMAND_ENTRY).strip()
-            if not raw:
+            try:
+                raw: str = input(self.COMMAND_ENTRY).strip()
+                if not raw:
+                    continue
+                self._execute_commands(raw)
+            except KeyboardInterrupt:
+                print("\n[Interrupt] Operation cancelled. Type 'exit' to quit.")
                 continue
-            self._execute_commands(raw)
+            except EOFError:
+                print("\nExiting...")
+                self.state.running = False
 
     def _init_launch(self) -> None:
         self.state.running = True

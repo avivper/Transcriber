@@ -16,6 +16,6 @@ class Command(ABC):
     """Abstract base class for all console commands."""
 
     @abstractmethod
-    def execute(self, state: AppState ,args: list[str]) -> None:
+    def execute(self, state: AppState ,args: list[str]=None) -> None:
         """Execute the command with the given application state and arguments."""
         ...

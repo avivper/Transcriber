@@ -8,28 +8,52 @@ from console.app_state import AppState
 from utils.splitter import VideoSplitter
 from utils.text_writer import TextWriter
 from utils.text_processor import TextProcessor
+from google.genai.errors import APIError
 import os
-
+import time
+import re
 
 class TranscribeCommand(Command):
     OUTPUT_DIR: str = "output"
     PROMPT_PATH: str = "prompts/transcription_agent.md"
+    RESOURCE_EXHAUSTED: int = 429
+    WAIT_TIME: int = 60
 
     @requires_key
-    def execute(self, state: AppState, args: list[str]) -> None:
+    def execute(self, state: AppState, args: list[str] = None) -> None:
+        state.check_rate_limit()
+        if state.is_rate_limited:
+            wait_time = state.get_remaining_wait_time()
+            raise CommandError(f"API Rate limit in effect. Please wait {wait_time}s.")
+
         if not args:
             raise CommandError("Missing required argument. Usage: transcribe <input_path>")
         
         input_path: str = args[0]
         
         if not os.path.exists(input_path):
-            raise CommandError(f"The file '{input_path} doesn't exists.")
+            raise CommandError(f"The file '{input_path}' doesn't exist.")
         
-        self._create_transcribed_output(input_path, state)
-        print(f"Processed chunk. Total session usage so far: {state.total_tokens_used} tokens.")
+        try:
+            self._create_transcribed_output(input_path, state)
+            print(f"Processed chunk. Total session usage so far: {state.total_tokens_used} tokens.")
+        except APIError as e:
+            if e.code == self.RESOURCE_EXHAUSTED:
+                self._handle_rate_limit(state, e)
+                raise CommandError(f"API Quota exceeded. {e.message}")
+            raise e
     
-    def _init_transcriber_agent(self, api_key: str) -> Transcriber:
-        model: Model = ModelFactory(api_key, self.PROMPT_PATH).init_llm_model()
+    def _handle_rate_limit(self, state: AppState, e: APIError) -> None:
+        state.is_rate_limited = True
+        match = re.search(r"retry in ([\d.]+)s", str(e))
+        wait_time: int = self.WAIT_TIME
+        if match:
+            wait_time = int(float(match.group(1))) + 1
+        state.retry_after = time.time() + wait_time
+        print(f"Rate limit hit. Application will wait for {wait_time}s.")
+
+    def _init_transcriber_agent(self, state: AppState) -> Transcriber:
+        model: Model = ModelFactory(state.api_key, self.PROMPT_PATH, state.current_model).init_llm_model()
         agent_factory: AgentFactory = AgentFactory()
         return agent_factory.init_agent(model, agent_factory.TRANSCRIBER)
     
@@ -47,7 +71,7 @@ class TranscribeCommand(Command):
         return parts
     
     def _transcribe_audios(self, audio_paths: list[str], state: AppState) -> dict[str, str]:
-        transcriber: Transcriber = self._init_transcriber_agent(state.api_key)
+        transcriber: Transcriber = self._init_transcriber_agent(state)
         print(f"\nTranscribing {len(audio_paths)} parts...")
         transcribed_data: TranscribedData = transcriber.transcribe_files(audio_paths)
         results: dict[str, str] = transcribed_data[0]
@@ -68,10 +92,14 @@ class TranscribeCommand(Command):
         print(f"Removed {len(audio_paths)} temporary audio file(s).")
 
     def _create_transcribed_output(self, input_path: str, state: AppState) -> None:
-        audio_paths: list[str] = self._split_videos_to_audios(input_path)
-        transcribed_data: dict[str, str] = self._transcribe_audios(audio_paths, state)
-        self._write_output_to_files(transcribed_data, input_path)
-        self._clean_up_audio_files(audio_paths)
+        audio_paths: list[str] = []
+        try:
+            audio_paths = self._split_videos_to_audios(input_path)
+            transcribed_data: dict[str, str] = self._transcribe_audios(audio_paths, state)
+            self._write_output_to_files(transcribed_data, input_path)
+        finally:
+            if audio_paths:
+                self._clean_up_audio_files(audio_paths)
 
     @staticmethod
     def _get_processed_data(data: dict[str, str]) -> list[str]:
