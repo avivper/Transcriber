@@ -21,7 +21,6 @@ class VideoSplitter:
     def duration_ms(self) -> int: 
         return len(self._load_audio())
     
-
     def split(self) -> list[str]:
         audio: AudioSegment = self._load_audio()
         chunk_ms: int = len(audio) // self.parts_to_split
