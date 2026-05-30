@@ -23,6 +23,8 @@ class TranslateCommand(Command):
             input_path: str = user_input[0]
             lang_code: str = user_input[1]
 
+            self._validate_language_switch(input_path, lang_code)
+
             if self._check_path(input_path):
                 prompt_path: str = f"prompts/translation_{lang_code}.md"
                 self._create_translated_output(input_path, state, lang_code, prompt_path)
@@ -75,6 +77,14 @@ class TranslateCommand(Command):
         processor: TextProcessor = TextProcessor(data).process()
         output_file_path: str = text_writer.write_list(processor, file_name)
         print(f"Created the output at {output_file_path}")
+
+    @staticmethod
+    def _validate_language_switch(input_path: str, lang_code: str) -> None:
+        filename: str = input_path.lower()
+        if lang_code == "he" and any(s in filename for s in ["_heb", "_he"]):
+            raise CommandError("Redundant action: The input file is already in Hebrew.")
+        if lang_code == "en" and any(s in filename for s in ["_eng", "_en"]):
+            raise CommandError("Redundant action: The input file is already in English.")
 
     @staticmethod
     def _init_translator_agent(state: AppState, lang_code: str, prompt_path: str) -> Translator:
