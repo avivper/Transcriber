@@ -7,3 +7,4 @@ from .help_command import HelpCommand
 from .usage_command import UsageCommand
 from .models_command import ModelsCommand
 from .use_command import UseCommand
+from .clear_command import ClearCommand

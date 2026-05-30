@@ -7,6 +7,7 @@ from .help_command import HelpCommand
 from .usage_command import UsageCommand
 from .models_command import ModelsCommand
 from .use_command import UseCommand
+from .clear_command import ClearCommand
 
 class CommandFactory:
     """Central factory to manage and initialize all available commands."""
@@ -22,5 +23,6 @@ class CommandFactory:
             "help": HelpCommand(),
             "usage": UsageCommand(),
             "models": ModelsCommand(),
-            "use": UseCommand()
+            "use": UseCommand(),
+            "clear": ClearCommand()
         }

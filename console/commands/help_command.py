@@ -14,6 +14,7 @@ class HelpCommand(Command):
     use <model_name>        Switch to a different Gemini model
     help                    Show this help message
     usage                   display the total tokens that used during this current session
+    clear                   Clear the console screen
     exit                    Exit the application
     
     Supported languages: en (English), he (Hebrew)

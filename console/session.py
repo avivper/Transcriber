@@ -2,21 +2,12 @@ from .app_state import AppState
 from .exceptions import CommandError
 from .commands import Command
 from .commands.command_factory import CommandFactory
+from .constants import BANNER
 
 
 class Session:
     """Interactive REPL that reads commands from stdin and dispatches them to registered Command handlers."""
     COMMAND_ENTRY: str = ">>> "
-    BANNER: str = r"""
-+--------------------------------------------------------------+
-|                                                              |
-|  _____                              _ _                      |
-| |_   _| __ __ _ _ __  ___  ___ _ __(_) |__   ___ _ __        |
-|   | || '__/ _` | '_ \/ __|/ __| '__| | '_ \ / _ \ '__|       |
-|   | || | | (_| | | | \__ \ (__| |  | | |_) |  __/ |          |
-|   |_||_|  \__,_|_| |_|___/\___|_|  |_|_.__/ \___|_|          |
-|                                                              |
-+--------------------------------------------------------------+"""
 
     def __init__(self) -> None:
         self.state = AppState()
@@ -51,6 +42,20 @@ class Session:
         command: Command | None = self.commands.get(name)
 
         if command is None:
+            print(f"Unkown command: {name}")
+            return
+        
+        self._execute(command, args)
+    
+    def _execute(self, command: Command, args: list[str]) -> None:
+        try: 
+            command.execute(self.state, args)
+        except CommandError as e:
+            # Catch known user/validation errors gracefully
+            print(f"Command Error: {e}")
+        except Exception as e:
+            # Catch unexpected fatal crashes (like network failures or deep bugs)
+            print(f"An unexpected system error occurred: {e}")    if command is None:
             print(f"Unkown command: {name}")
             return
         
