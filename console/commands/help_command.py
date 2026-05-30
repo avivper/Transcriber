@@ -22,4 +22,11 @@ class HelpCommand(Command):
   """
 
     def execute(self, state: AppState, args: list[str] = None) -> None:
+        """
+        Prints the help text containing all available commands and their usage.
+        
+        Args:
+            state: The shared AppState container.
+            args: Optional command arguments (ignored).
+        """
         print(self.HELP_TEXT)
