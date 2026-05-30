@@ -1,5 +1,5 @@
-from console.commands.command import Command
-from console.app_state import AppState
+from console import AppState
+from console.commands import Command
 
 class UsageCommand(Command):
     def execute(self, state: AppState, args: list[str] = None) -> None:

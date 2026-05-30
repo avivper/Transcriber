@@ -1,13 +1,8 @@
-from console.commands.command import Command, requires_key
-from agents.transcriber import Transcriber, TranscribedData
-from agents.models.model import Model
-from agents.models.model_factory import ModelFactory
-from agents.agent_factory import AgentFactory
-from console.exceptions import CommandError
-from console.app_state import AppState
-from utils.splitter import VideoSplitter
-from utils.text_writer import TextWriter
-from utils.text_processor import TextProcessor
+from console import AppState, CommandError
+from console.commands import Command, requires_key
+from agents import Transcriber, TranscribedData, AgentFactory
+from agents.models import Model, ModelFactory
+from utils import VideoSplitter, TextWriter, TextProcessor
 from google.genai.errors import APIError
 from typing import Tuple
 import os

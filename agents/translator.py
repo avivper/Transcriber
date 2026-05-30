@@ -1,8 +1,8 @@
 import os
 from google import genai
-from agents.models.model import Model
+from agents.models import Model
 from typing import TypeAlias, Tuple
-from agents.orchestrator import language_prompt
+from .orchestrator import language_prompt
 
 File: TypeAlias = genai.types.File
 TranslatedData: TypeAlias = Tuple[str, int]

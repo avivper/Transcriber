@@ -1,6 +1,6 @@
-from agents.models.model import Model
-from agents.transcriber import Transcriber
-from agents.translator import Translator
+from agents.models import Model
+from .transcriber import Transcriber
+from .translator import Translator
 from typing import TypeAlias 
 
 Agent: TypeAlias = Transcriber | Translator | None

@@ -1,5 +1,5 @@
-from console.commands.command import Command
-from console.app_state import AppState
+from console import AppState
+from console.commands import Command
 from config import Config
 
 class LoadCommand(Command):

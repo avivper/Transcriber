@@ -1,3 +1,5 @@
+# Transcriber
+
 ```
 +--------------------------------------------------------------+
 |                                                              |
@@ -10,33 +12,27 @@
 +--------------------------------------------------------------+
 ```
 
-> AI-powered lecture transcription and translation — verbatim English output with Hebrew translation, built to help students review university lectures.
+> AI-powered lecture transcription and translation — built to help students review university lectures with multi-language support and smart resource management.
 
 ---
 
 ## Overview
 
-Transcriber takes a video file of a lecture and produces a full verbatim transcription in English, along with a Hebrew translation. It was built to help students review and summarize lectures using LLM agent models powered by the Google Gemini API.
+Transcriber is an interactive CLI tool that transforms video lectures into structured, timestamped transcriptions. Powered by Google Gemini, it handles large video files by intelligently splitting them into chunks and processing them with specialized AI agents.
 
-The tool runs as an interactive console session — load your API key, transcribe a video, and translate the result in sequence.
+The tool features a robust interactive REPL with automated rate-limit handling, dynamic model switching, and graceful interrupt support.
 
 ---
 
 ## Features
 
-- Splits long video files into audio chunks automatically
-- Transcribes speech to English with `[MM:SS]` timestamps and speaker labels
-- Translates transcriptions from English to Hebrew, preserving formatting
-- Outputs `.txt` files ready for review and study
-- Lightweight interactive console — no GUI required
-
----
-
-## Requirements
-
-- Python 3.11+
-- [ffmpeg](https://ffmpeg.org/) installed on your system
-- A [Google Gemini API key](https://ai.google.dev/)
+- **Multi-Language Support**: Transcribe or translate into English or Hebrew.
+- **Automatic Video Splitting**: Handles long lectures by splitting them into 20-minute MP3 chunks.
+- **Rate-Limit Handling**: Automatically detects `429 RESOURCE_EXHAUSTED` errors and retries with backoff.
+- **Dynamic Model Selection**: List and switch between Gemini models (Flash/Pro) mid-session.
+- **Session Tracking**: Monitor token usage across multiple commands.
+- **Graceful Interrupts**: Cleanly handle `Ctrl+C` with guaranteed cleanup of temporary files.
+- **Professional Architecture**: Clean Command pattern with a centralized Orchestrator and package facades.
 
 ---
 
@@ -48,21 +44,14 @@ The tool runs as an interactive console session — load your API key, transcrib
    cd Transcriber
    ```
 
-2. **Install Python dependencies**
+2. **Install Dependencies**
    ```bash
    pip install -r requirements.txt
+   brew install ffmpeg  # Required for audio processing
    ```
 
-3. **Install ffmpeg**
-   ```bash
-   # macOS
-   brew install ffmpeg
-
-   # Ubuntu / Debian
-   sudo apt install ffmpeg
-   ```
-
-4. **Set up your API key** — create a `.env` file in the project root:
+3. **Set up API Key**
+   Create a `.env` file in the project root:
    ```
    GEMINI_API_KEY=your_api_key_here
    ```
@@ -72,7 +61,6 @@ The tool runs as an interactive console session — load your API key, transcrib
 ## Usage
 
 Start the interactive session:
-
 ```bash
 python main.py
 ```
@@ -82,47 +70,58 @@ python main.py
 | Command | Description |
 |---|---|
 | `load` | Load the Gemini API key from `.env` |
-| `transcribe <path>` | Split the video and transcribe it to English |
-| `translate <path>` | Translate a transcription file to Hebrew |
-| `exit` | Exit the session |
+| `transcribe <path> [lang]` | Transcribe video. Default: English (`en`), supports Hebrew (`he`) |
+| `translate <path> [lang]` | Translate text. Default: Hebrew (`he`), supports English (`en`) |
+| `models` | List all available Gemini models |
+| `use <model>` | Switch the active model (e.g., `gemini-1.5-flash`) |
+| `usage` | Show session token count and API status |
+| `help` | Show all available commands |
+| `exit` | Exit the application |
 
-### Workflow
+### Example Workflow
 
 ```
 >>> load
 API Key loaded successfully!
->>> transcribe lectures/lecture01.mp4
->>> translate output/lecture01_eng.txt
-Created the output at output/lecture01_heb.txt
+>>> transcribe lecture.mp4 he
+Splitting 'lecture.mp4'...
+Transcribing into HEBREW...
+Created the output at output/lecture_heb.txt
+>>> usage
+Total session usage so far: 15420 tokens.
 ```
-
-Output files are saved to the `output/` directory.
 
 ---
 
 ## Output Format
 
-**English transcription** (`output/<filename>_eng.txt`):
+Transcriptions include `[MM:SS]` timestamps and speaker labels (`**Lecturer:**` or `**מרצה:**`). 
+
+**English Example:**
 ```
-## Audio Transcription: lecture01.mp4_part1
-
----
-
-**Lecturer:** `[00:00]`
-Welcome to today's session on operating systems...
-
 **Lecturer:** `[02:15]`
 As we discussed last week, the scheduler is responsible for...
 ```
 
-**Hebrew translation** (`output/<filename>_heb.txt`) — same structure with translated content and `**מרצה:**` speaker labels.
+---
+
+## Architecture
+
+Transcriber is built with a clean, extensible architecture:
+- **Command Pattern**: Every action is a standalone class.
+- **Orchestrator Layer**: Manages language-specific prompts and agent coordination.
+- **Facade Pattern**: Uses `__init__.py` files for clean, consolidated imports.
+- **State Management**: A global `AppState` tracks tokens, rate limits, and model choices.
+
+For deeper technical details, see [GEMINI.md](./GEMINI.md).
 
 ---
 
 ## Tech Stack
 
-| | |
+| Component | Technology |
 |---|---|
-| [Google Gemini](https://ai.google.dev/) | LLM transcription and translation via Gemini Files API |
-| [pydub](https://github.com/jiaaro/pydub) | Audio/video splitting and processing |
-| [python-dotenv](https://github.com/theskumar/python-dotenv) | Environment and API key management |
+| **LLM Engine** | Google Gemini (via `google-genai` SDK) |
+| **Audio/Video** | `pydub` + `ffmpeg` |
+| **Config** | `python-dotenv` |
+| **CLI** | Interactive Python REPL |

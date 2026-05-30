@@ -1,7 +1,7 @@
 """Entry point — starts the interactive Transcriber console session."""
 
 import sys
-from console.session import Session
+from console import Session
 
 if __name__ == "__main__":
     session: Session = Session()
