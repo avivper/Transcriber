@@ -32,7 +32,6 @@ The tool features a robust interactive REPL with automated rate-limit handling, 
 - **Rate-Limit Handling**: Automatically detects `429 RESOURCE_EXHAUSTED` errors and retries with backoff.
 - **Dynamic Model Selection**: List and switch between Gemini models (Flash/Pro) mid-session.
 - **Smart Launcher**: Custom `./Transcriber` script that checks dependencies and activates your virtual environment automatically.
-- **Graceful Interrupts**: Cleanly handle `Ctrl+C` with guaranteed cleanup of temporary files.
 
 ---
 
