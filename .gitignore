@@ -1,0 +1,18 @@
+# Environment / secrets
+.env
+
+# Python
+**/__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+
+# Media & generated output
+output/
+*.mp3
+*.mp4
+
+# Editor
+.vscode/
