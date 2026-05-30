@@ -35,8 +35,6 @@ The tool features a robust interactive REPL with automated rate-limit handling, 
 
 ---
 
----
-
 ## Installation
 
 1. **Clone the repository**
@@ -109,13 +107,18 @@ Start the interactive session using the global launcher:
 
 ## Architecture
 
-Transcriber is built with a clean, extensible architecture:
-- **Command Pattern**: Every action is a standalone class.
-- **Orchestrator Layer**: Manages language-specific prompts and agent coordination.
-- **Facade Pattern**: Uses `__init__.py` files for clean, consolidated imports.
-- **State Management**: A global `AppState` tracks tokens, rate limits, and model choices.
+Transcriber follows a highly modular, professional architecture designed for stability and extensibility.
 
-For deeper technical details, see [GEMINI.md](./GEMINI.md).
+### Core Design Patterns
+- **Command Pattern**: Every CLI operation (`transcribe`, `translate`, etc.) is encapsulated as a standalone class inheriting from a base `Command`. This keeps the main logic loop decoupled from specific feature implementations.
+- **Orchestrator Middleware**: A dedicated `Orchestrator` layer uses Python decorators to dynamically inject language-specific request prompts into agent methods based on user selection.
+- **Facade Pattern**: All packages (`console`, `agents`, `utils`) utilize `__init__.py` files to expose a clean, high-level interface while hiding internal implementation details and preventing circular dependencies.
+- **Factory Pattern**: Centralized factories manage the instantiation of AI Agents and Gemini Model wrappers, ensuring consistent configuration across the app.
+
+### Technical Components
+- **State Management**: A global `AppState` object tracks cumulative token usage, active model selection, and real-time rate limit status across the entire session.
+- **Resource Management**: The `VideoSplitter` utility handles large files by slicing them into optimized MP3 chunks. All operations utilize `try...finally` blocks to guarantee the cleanup of temporary local files and API-side uploads.
+- **Error Resilience**: Built-in 429 `RESOURCE_EXHAUSTED` handling automatically parses retry headers from the Gemini API and performs smart backoff retries.
 
 ---
 
