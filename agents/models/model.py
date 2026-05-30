@@ -1,5 +1,5 @@
 from google import genai
-from typing import Any, TypeAlias
+from typing import Any, TypeAlias, Tuple
 import os 
 import time 
 
@@ -26,16 +26,23 @@ class Model:
         with open(path, "r", encoding="utf-8") as file:
             return file.read()
 
-    def get_data(self, content: list[Any]) -> str:
-        return self._get_content(content).text
-
-    def get_data_from_file(self, prompt: str, file: File) -> str: 
+    def get_data_from_file(self, prompt: str, file: File) -> Tuple[str, int]: 
         try:
             content: list[Any] = [file, prompt]
-            return self.get_data(content)
+            return self.get_tokens_and_data(content)
         finally:
             self.client.files.delete(name=file.name)
     
+    def get_tokens_and_data(self, content: list[Any]) -> Tuple[str, int]:
+        response: GenerateContentResponse = self._get_content(content)
+        text_result: str = response.text
+        tokens_used: int = 0
+
+        if response.usage_metadata:
+            tokens_used = response.usage_metadata.total_token_count
+        
+        return (text_result, tokens_used)
+
     def upload_file_to_model(self, path: str, processor_type: str) -> File:
         file: File = self._set_file_type_to_process(path, processor_type)
         while file.state.name == self.PROCESSING:

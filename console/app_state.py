@@ -3,3 +3,4 @@ class AppState:
         """Holds shared application state — the API key lives here."""
         self.api_key: str | None = None
         self.running: bool = False
+        self.total_tokens_used: int = 0

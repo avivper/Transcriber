@@ -5,6 +5,7 @@ from console.commands.transcribe_command import TranscribeCommand
 from console.commands.exit_command import ExitCommand
 from console.commands.translate_command import TranslateCommand
 from console.commands.help_command import HelpCommand
+from console.commands.usage_command import UsageCommand
 from console.exceptions import CommandError
 
 class Session:
@@ -29,7 +30,8 @@ class Session:
             "load" : LoadCommand(),
             "transcribe": TranscribeCommand(),
             "translate": TranslateCommand(),
-            "help": HelpCommand()
+            "help": HelpCommand(),
+            "usage": UsageCommand()
         }
     
     def run(self) -> None:

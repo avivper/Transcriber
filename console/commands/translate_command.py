@@ -1,7 +1,8 @@
 from console.commands.command import Command, requires_key
-from agents.translator import Translator
+from agents.translator import Translator, TranslatedData
 from agents.models.model import Model 
 from agents.models.model_factory import ModelFactory
+from agents.agent_factory import AgentFactory
 from console.app_state import AppState
 from console.exceptions import CommandError
 from utils.text_writer import TextWriter
@@ -25,15 +26,21 @@ class TranslateCommand(Command):
             raise CommandError(f"The file '{input_path} doesn't exists.")
 
         self._create_translated_data(input_path, state.api_key)
+        print(f"Processed chunk. Total session usage so far: {state.total_tokens_used} tokens.")
     
     def _init_translator_agent(self, api_key: str) -> Translator:
         model: Model = ModelFactory(api_key, self.PROMPT_PATH).init_llm_model()
-        return Translator(model)
+        agent_factory: AgentFactory = AgentFactory()
+        return agent_factory.init_agent(model, agent_factory.TRANSLATOR)
     
-    def _translate_data(self, input_path: str, api_key: str) -> list[str]:
-        translator: Translator = self._init_translator_agent(api_key)
-        try: 
-            return [translator.translate_from_file(input_path)]
+    def _translate_data(self, input_path: str, state: AppState) -> list[str]:
+        translator: Translator = self._init_translator_agent(state.api_key)
+        try:
+            translated_data: TranslatedData = translator.translate_from_file(input_path)
+            translated_text: str = translated_data[0]
+            tokens_used: int = translated_data[1]
+            state.total_tokens_used += tokens_used
+            return [translated_text]
         except APIError as e:
             if e.code == self.RESOURCE_EXHAUSTED:
                 # TODO handle this error if amount of tokens is over
