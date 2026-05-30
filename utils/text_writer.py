@@ -1,7 +1,7 @@
-from pathlib import Path 
+from pathlib import Path
 
 class TextWriter:
-    TXT_EXTENSTION: str = ".txt"
+    TXT_EXTENSION: str = ".txt"
     DEFAULT_ENCODING: str = "utf-8"
     SEPARATOR: str = "\n\n"
 
@@ -13,13 +13,9 @@ class TextWriter:
         self.output_dir: Path = Path(output_dir)
         self.encoding: str = encoding
         self._ensure_dir(self.output_dir)
-    
-    def write_dict(self, data: dict[str, str], filename: str) -> str:
-        values: list[str] = list(data.values())
-        return self.write_list(values, filename)
-    
+
     def write_list(self, data: list[str], filename: str) -> str:
-        file_path: Path = self.output_dir / self._ensure_extenstion(filename)
+        file_path: Path = self.output_dir / self._ensure_extension(filename)
         content: str = self.SEPARATOR.join(data)
         
         with open(file_path, "w", encoding=self.encoding, newline="\n") as file:
@@ -28,17 +24,11 @@ class TextWriter:
                 file.write("\n")
 
         return str(file_path)
-
-    def _write(self, filename: str, text: str) -> str:
-        file_path: Path = self.output_dir / filename
-        with open(file_path, "w", encoding=self.encoding, newline="\n") as file:
-            file.write(text)
-        return str(file_path)
     
-    def _ensure_extenstion(self, filename: str) -> str:
-        if filename.endswith(self.TXT_EXTENSTION):
+    def _ensure_extension(self, filename: str) -> str:
+        if filename.endswith(self.TXT_EXTENSION):
             return filename
-        return filename + self.TXT_EXTENSTION
+        return filename + self.TXT_EXTENSION
     
     @staticmethod 
     def _ensure_dir(directory: Path) -> None:

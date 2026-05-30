@@ -17,16 +17,3 @@ class Translator:
         prompt: str = f"Translate the data of the file: {file_name}"
         return self.model.get_data_from_file(prompt, text_file)
     
-    def translate_files(self, text_paths: list[str]) -> list[str]:
-        result: list[str] = []
-        for file in text_paths:
-            result.append(self.translate_from_file(file))
-        return result
-    
-    def translate_from_dict(self, transcribed_data: dict[str, str]) -> list[str]:
-        result: list[str] = []
-        for file_name, data_to_translate in transcribed_data.items():
-            prompt: str = f"Translate the data of the file: {file_name}"
-            content_to_llm: list[str] = [prompt, data_to_translate]
-            result.append(self.model.get_data(content_to_llm))
-        return result

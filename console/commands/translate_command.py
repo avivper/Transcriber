@@ -4,12 +4,15 @@ from agents.models.model import Model
 from agents.models.model_factory import ModelFactory
 from console.app_state import AppState
 from console.exceptions import CommandError
-from utils.textwriter import TextWriter
+from utils.text_writer import TextWriter
+from utils.text_processor import TextProcessor
+from google.genai.errors import APIError
 import os
 
 class TranslateCommand(Command):
     OUTPUT_DIR: str = "output"
     PROMPT_PATH: str = "prompts/translation_agent.md"
+    RESOURCE_EXHAUSTED: int = 429
 
     @requires_key
     def execute(self, state: AppState, args: list[str]) -> None:
@@ -29,14 +32,31 @@ class TranslateCommand(Command):
     
     def _translate_data(self, input_path: str, api_key: str) -> list[str]:
         translator: Translator = self._init_translator_agent(api_key)
-        return translator.translate_from_file(input_path)
-    
+        try: 
+            return [translator.translate_from_file(input_path)]
+        except APIError as e:
+            if e.code == self.RESOURCE_EXHAUSTED:
+                # TODO handle this error if amount of tokens is over
+                print(f"{e}")
+            else:
+                raise e
+
     def _create_translated_data(self, input_path: str, api_key: str) -> None:
         translated_data: list[str] = self._translate_data(input_path, api_key)
         self._write_output_data(translated_data, input_path)
 
     def _write_output_data(self, data: list[str], input_path: str) -> None:
         text_writer: TextWriter = TextWriter(self.OUTPUT_DIR)
-        output_file_path: str = text_writer.write_list(data, os.path.basename(input_path))
+        file_name: str = self._get_file_name(input_path)
+        processor: TextProcessor = TextProcessor(data).process()
+        output_file_path: str = text_writer.write_list(processor, file_name)
         print(f"Created the output at {output_file_path}")
+
+    @staticmethod 
+    def _get_file_name(input_path: str) -> str: 
+        original_name: str = os.path.basename(input_path)
+        stem: str = os.path.splitext(original_name)[0]
+        if stem.endswith("_eng"):
+            stem = stem[:-4]
+        return stem + "_heb.txt"
     

@@ -10,7 +10,7 @@ GenerateContentConfig: TypeAlias = genai.types.GenerateContentConfig
 
 class Model:
     # TODO: support a various models in the future
-    MODEL: str = "gemini-3.5-flash"
+    MODEL: str = "gemini-2.5-pro" # "gemini-3.5-flash"
     MIME_TYPE: str = "audio/mpeg"
     PROCESSING: str = "PROCESSING"
     SECONDS_TO_SLEEP: int = 2

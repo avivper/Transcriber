@@ -5,7 +5,8 @@ from agents.models.model_factory import ModelFactory
 from console.exceptions import CommandError
 from console.app_state import AppState
 from utils.splitter import VideoSplitter
-from utils.textwriter import TextWriter
+from utils.text_writer import TextWriter
+from utils.text_processor import TextProcessor
 import os
 
 
@@ -17,13 +18,10 @@ class TranscribeCommand(Command):
     def execute(self, state: AppState, args: list[str]) -> None:
         if not args:
             raise CommandError("Missing required argument. Usage: transcribe <input_path>")
-        
         input_path: str = args[0]
-
         if not os.path.exists(input_path):
             raise CommandError(f"The file '{input_path} doesn't exists.")
-
-        self._create_transcribed_output(input_path, state)
+        self._create_transcribed_output(input_path, state.api_key)
     
     def _init_transcriber_agent(self, api_key: str) -> Transcriber:
         model: Model = ModelFactory(api_key, self.PROMPT_PATH).init_llm_model()
@@ -48,9 +46,11 @@ class TranscribeCommand(Command):
         results: dict[str, str] = transcriber.transcribe_files(audio_paths)
         return results
     
-    def _write_output_to_files(self, data: dict[str,str], input_path: str) -> None:
+    def _write_output_to_files(self, data: dict[str, str], input_path: str) -> None:
         text_writer: TextWriter = TextWriter(self.OUTPUT_DIR)
-        output_file_path: str = text_writer.write_dict(data, input_path)
+        processed: list[str] = self._get_processed_data(data)
+        file_name: str = self._get_file_name(input_path)
+        output_file_path: str = text_writer.write_list(processed, file_name)
         print(f"Created the output at {output_file_path}")
 
     def _clean_up_audio_files(self, audio_paths: list[str]) -> None:
@@ -58,8 +58,20 @@ class TranscribeCommand(Command):
             os.remove(path)
         print(f"Removed {len(audio_paths)} temporary audio file(s).")
 
-    def _create_transcribed_output(self, input_path: str, state: AppState) -> None:
+    def _create_transcribed_output(self, input_path: str, api_key: str) -> None:
         audio_paths: list[str] = self._split_videos_to_audios(input_path)
-        transcribed_data: dict[str, str] = self._transcribe_audios(audio_paths, state.api_key)
+        transcribed_data: dict[str, str] = self._transcribe_audios(audio_paths, api_key)
         self._write_output_to_files(transcribed_data, input_path)
         self._clean_up_audio_files(audio_paths)
+
+    @staticmethod
+    def _get_processed_data(data: dict[str, str]) -> list[str]:
+        values: list[str] = list(data.values())
+        text_processor: TextProcessor = TextProcessor(values)
+        return text_processor.process()
+    
+    @staticmethod
+    def _get_file_name(input_path: str) -> str:
+        original_name: str = os.path.basename(input_path)
+        stem: str = os.path.splitext(original_name)[0]
+        return stem + "_eng.txt"

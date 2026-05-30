@@ -18,7 +18,6 @@ class Transcriber:
         prompt: str = f"Transcribe the audio file: {file_name}"
         return self.model.get_data_from_file(prompt, audio_file)
     
-    # Maps filename -> Transcribtion
     def transcribe_files(self, audio_paths: list[str]) -> dict[str, str]:
         result: dict[str, str] = {}
         for path in audio_paths:
