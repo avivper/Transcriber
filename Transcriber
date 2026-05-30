@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Transcriber Launch Script
+# This script finds its own location to ensure main.py is found correctly.
+
+# 1. Get the directory where this script is located
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# 2. Change to the project directory
+cd "$PROJECT_DIR"
+
+# 3. Check for common virtual environment locations and activate if found
+if [ -d "$PROJECT_DIR/venv" ]; then
+    source "$PROJECT_DIR/venv/bin/activate"
+elif [ -d "$PROJECT_DIR/.venv" ]; then
+    source "$PROJECT_DIR/.venv/bin/activate"
+fi
+
+# 4. Launch the application
+python3 main.py
