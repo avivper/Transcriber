@@ -1,3 +1,10 @@
+"""
+Custom exception definitions for the console application.
+"""
+
 class CommandError(Exception):
-    """Raised when a user inputs an invalid command or argument."""
+    """
+    Exception raised to signify a user-recoverable error in command execution.
+    Caught by the Session loop to display clean feedback instead of a stack trace.
+    """
     pass

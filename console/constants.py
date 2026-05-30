@@ -1,3 +1,7 @@
+"""
+Global application constants and branding assets.
+"""
+
 BANNER: str = r"""
 +--------------------------------------------------------------+
 |                                                              |

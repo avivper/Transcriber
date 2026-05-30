@@ -1,8 +1,20 @@
+"""
+Middleware and orchestration logic for agent communication.
+Contains decorators for dynamic prompt injection and language handling.
+"""
+
 import os
 from functools import wraps
 from typing import Any
 
 def language_prompt(func: callable) -> callable:
+    """
+    Decorator that injects language-specific request prompts into agent methods.
+    
+    Determines the target language from the agent instance's 'language' attribute
+    and selects the appropriate instruction template for either transcription 
+    or translation tasks.
+    """
     @wraps(func)
     def wrapper(self, path: str):
         lang: Any = getattr(self, "language", "en")
