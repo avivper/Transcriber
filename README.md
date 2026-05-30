@@ -92,8 +92,8 @@ python main.py
 >>> load
 API Key loaded successfully!
 >>> transcribe lectures/lecture01.mp4
->>> translate output/lecture01.mp4.txt
-Created the output at output/lecture01.mp4.txt
+>>> translate output/lecture01_eng.txt
+Created the output at output/lecture01_heb.txt
 ```
 
 Output files are saved to the `output/` directory.
@@ -102,7 +102,7 @@ Output files are saved to the `output/` directory.
 
 ## Output Format
 
-**English transcription** (`output/<filename>.txt`):
+**English transcription** (`output/<filename>_eng.txt`):
 ```
 ## Audio Transcription: lecture01.mp4_part1
 
@@ -115,7 +115,7 @@ Welcome to today's session on operating systems...
 As we discussed last week, the scheduler is responsible for...
 ```
 
-**Hebrew translation** — same structure with translated content and `**מרצה:**` speaker labels.
+**Hebrew translation** (`output/<filename>_heb.txt`) — same structure with translated content and `**מרצה:**` speaker labels.
 
 ---
 
