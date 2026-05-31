@@ -15,7 +15,7 @@ class TextProcessor:
 
     def __init__(self, data: list[str]) -> None:
         """Initializes the processor with a list of text chunks."""
-        self.data = data
+        self.data: list[str] = data
 
     def process(self) -> list[str]:
         """Runs the formatting pipeline on all data chunks."""

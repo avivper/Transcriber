@@ -3,7 +3,7 @@ Initializes and manages the interactive Transcriber REPL session.
 """
 
 from .app_state import AppState
-from .exceptions import CommandError
+from utils import CommandError, FactoryError, ProcessingError
 from .commands import Command
 from .commands.command_factory import CommandFactory
 from .constants import BANNER
@@ -70,11 +70,11 @@ class Session:
         Orchestrates the safe execution of a single command.
         Catches and reports CommandErrors and unexpected system failures.
         """
-        try: 
+        try:
             command.execute(self.state, args)
         except CommandError as e:
-            # Catch known user/validation errors gracefully
-            print(f"Command Error: {e}")
+            print(f"Error: {e}")
+        except (FileNotFoundError, TimeoutError, FactoryError, ProcessingError) as e:
+            print(f"Error: {e}")
         except Exception as e:
-            # Catch unexpected fatal crashes (like network failures or deep bugs)
             print(f"An unexpected system error occurred: {e}")

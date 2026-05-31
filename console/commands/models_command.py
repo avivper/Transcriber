@@ -28,22 +28,25 @@ class ModelsCommand(Command):
     def _print_output(self, client: genai.Client) -> None:
         """
         Orchestrates the retrieval and printing of model data.
-        
+        Fetches the model list once and passes it to both formatters.
+
         Args:
             client: The initialized Gemini API client.
         """
-        self._list_models(client)
+        try:
+            models: list = list(client.models.list())
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            return
+        self._list_models(models)
         print('\n')
-        available_models: list[str] = [
-            m.name for m in client.models.list()
-        ]
-        self.list_models_names(available_models)
+        self.list_models_names([m.name for m in models])
 
     @staticmethod
     def list_models_names(available_models: list[str]) -> None:
         """
         Prints a simplified bulleted list of available model short-names.
-        
+
         Args:
             available_models: A list of full model resource names.
         """
@@ -52,19 +55,16 @@ class ModelsCommand(Command):
                 print(f" - {m.replace('models/', '')}")
 
     @staticmethod
-    def _list_models(client: genai.Client) -> None:
+    def _list_models(models: list) -> None:
         """
         Prints a formatted table showing detailed model metadata.
-        
+
         Args:
-            client: The initialized Gemini API client.
+            models: The list of Gemini model objects to display.
         """
         print(f"{'Model Name':<40} | {'Supported Actions'}")
         print("-" * 70)
-        try:
-            for model in client.models.list():
-                name: str = model.name
-                actions: str = ", ".join(model.supported_generation_methods)
-                print(f"{name:<40} | {actions}")
-        except Exception as e:
-            print(f"An error occurred: {e}")
+        for model in models:
+            name: str = model.name
+            actions: str = ", ".join(model.supported_generation_methods)
+            print(f"{name:<40} | {actions}")

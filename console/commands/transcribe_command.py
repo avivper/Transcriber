@@ -4,13 +4,11 @@ Supports multi-language transcription and automatic file splitting.
 """
 
 from console.app_state import AppState
-from console.exceptions import CommandError
+from utils import VideoSplitter, TextWriter, TextProcessor, CommandError, FactoryError, ProcessingError
 from .command import Command, requires_key
-from agents import Transcriber, TranscribedData, AgentFactory
+from agents import Transcriber, TranscribedData, AgentFactory, AgentType
 from agents.models import Model, ModelFactory
-from utils import VideoSplitter, TextWriter, TextProcessor
 from google.genai.errors import APIError
-from typing import Tuple
 import os
 import time
 import re
@@ -39,18 +37,26 @@ class TranscribeCommand(Command):
         """
         try:
             self._rate_limit_checks(state)
-            user_input: Tuple[str,str] = self._get_args(args)
+            user_input: tuple[str,str] = self._get_args(args)
             input_path: str = user_input[0]
             lang_code: str = user_input[1]
-            if self._check_path(input_path):
-                prompt_path: str = f"prompts/transcription_{lang_code}.md"
-                self._create_transcribed_output(input_path, state, lang_code, prompt_path)
-                print(f"Processed chunk. Total session usage so far: {state.total_tokens_used} tokens.")
+            self._check_path(input_path)
+            prompt_path: str = f"prompts/transcription_{lang_code}.md"
+            self._create_transcribed_output(input_path, state, lang_code, prompt_path)
+            print(
+                f"Processed chunk. Total session usage so far: {
+                state.total_tokens_used} tokens."
+                )
         except APIError as e:
             if e.code == self.RESOURCE_EXHAUSTED:
                 self._handle_rate_limit(state, e)
                 raise CommandError(f"API Quota exceeded. {e.message}")
-            raise e
+            raise
+        except (
+            CommandError, FactoryError,
+            TimeoutError, FileNotFoundError, ProcessingError
+        ):
+            raise
     
     def _handle_rate_limit(self, state: AppState, e: APIError) -> None:
         """Updates state with rate limit info and calculates wait time."""
@@ -67,33 +73,48 @@ class TranscribeCommand(Command):
         print(f"Splitting '{input_path}'...")
         video_splitter: VideoSplitter = VideoSplitter(input_path)
         print(f"Video duration: {video_splitter.duration_ms / 1000:.1f}s")
-        return self._get_audio_parts(video_splitter)
-    
+        try:
+            return self._get_audio_parts(video_splitter)
+        except ProcessingError:
+            raise
+
     def _get_audio_parts(self, video_splitter: VideoSplitter) -> list[str]:
         """Retrieves and prints the list of generated audio part paths."""
-        parts: list[str] = video_splitter.split()
-        print(f"\nCreated {len(parts)} parts:")
-        for path in parts:
-            print(f" {path}")
-        return parts
+        try:
+            parts: list[str] = video_splitter.split()
+            print(f"\nCreated {len(parts)} parts:")
+            for path in parts:
+                print(f" {path}")
+            return parts
+        except ProcessingError:
+            raise
     
     def _transcribe_audios(
             self, audio_paths: list[str], state: AppState, 
             lang_code: str, prompt_path: str
             ) -> dict[str, str]:
         """Initializes the agent and transcribes all audio chunks."""
-        transcriber: Transcriber = self._init_transcriber_agent(state, lang_code, prompt_path)
-        
-        target_lang: str = "Hebrew" if lang_code == "he" else "English"
-        print(f"\n[Process] Starting transcription of {len(audio_paths)} parts into {target_lang}...")
-        
-        transcribed_data: TranscribedData = transcriber.transcribe_files(audio_paths)
-        results: dict[str, str] = transcribed_data[0]
-        tokens_used: int = transcribed_data[1]
-        state.total_tokens_used += tokens_used
-        return results
+        try:
+            transcriber: Transcriber = self._init_transcriber_agent(
+            state, lang_code, prompt_path
+            )
+            target_lang: str = "Hebrew" if lang_code == "he" else "English"
+            print(
+                f"\n[Process] Starting transcription of {len(audio_paths)} parts into {target_lang}..."
+                )
+            transcribed_data: TranscribedData = transcriber.transcribe_files(audio_paths)
+            results: dict[str, str] = transcribed_data[0]
+            tokens_used: int = transcribed_data[1]
+            state.total_tokens_used += tokens_used
+            return results
+        except TimeoutError:
+            raise
+        except FactoryError:
+            raise
     
-    def _write_output_to_files(self, data: dict[str, str], input_path: str, lang_code: str) -> None:
+    def _write_output_to_files(
+            self, data: dict[str, str], input_path: str, lang_code: str
+            ) -> None:
         """Processes transcription data and writes it to language-specific subfolders."""
         folder_name: str = "English" if lang_code == "en" else "Hebrew"
         target_dir: str = os.path.join(self.OUTPUT_DIR, folder_name)
@@ -106,7 +127,10 @@ class TranscribeCommand(Command):
     def _clean_up_audio_files(self, audio_paths: list[str]) -> None:
         """Deletes temporary audio chunks from disk."""
         for path in audio_paths:
-            os.remove(path)
+            try:
+                os.remove(path)
+            except OSError as e:
+                print(f"Warning: could not remove temp file '{path}': {e}")
         print(f"Removed {len(audio_paths)} temporary audio file(s).")
 
     def _create_transcribed_output(
@@ -142,15 +166,28 @@ class TranscribeCommand(Command):
     
     @staticmethod
     def _rate_limit_checks(state: AppState) -> None:
-        """Blocks execution if the global rate limit state is active."""
+        """
+        Blocks execution if the global rate limit state is active.
+
+        Raises:
+            CommandError: If the rate limit is currently active, with the remaining wait time.
+        """
         state.check_rate_limit()
         if state.is_rate_limited:
             wait_time = state.get_remaining_wait_time()
             raise CommandError(f"API Rate limit in effect. Please wait {wait_time}s.")
         
     @staticmethod
-    def _get_args(args: list[str]) -> Tuple[str, str]:
-        """Parses and validates command-line arguments for transcription."""
+    def _get_args(args: list[str]) -> tuple[str, str]:
+        """
+        Parses and validates command-line arguments for transcription.
+
+        Returns:
+            A tuple of (input_path, lang_code).
+
+        Raises:
+            CommandError: If args is empty or the language code is not supported.
+        """
         if not args:
             raise CommandError("Usage: transcribe <input_path> [en|he]")
         input_path: str = args[0]
@@ -161,15 +198,22 @@ class TranscribeCommand(Command):
         return (input_path, lang_code)
     
     @staticmethod
-    def _check_path(input_path: str) -> bool:
-        """Validates that the input file exists on disk."""
+    def _check_path(input_path: str) -> None:
+        """
+        Validates that the input file exists on disk.
+
+        Raises:
+            FileNotFoundError: If no file exists at input_path.
+        """
         if not os.path.exists(input_path):
-            raise CommandError(f"The file '{input_path}' doesn't exist.")
-        return True
-    
+            raise FileNotFoundError(f"The file '{input_path}' doesn't exist.")
+
     @staticmethod
     def _init_transcriber_agent(state: AppState, lang_code: str, prompt_path: str) -> Transcriber:
         """Initializes a language-aware Transcriber agent."""
         model: Model = ModelFactory(state.api_key, prompt_path, state.current_model).init_llm_model()
         agent_factory: AgentFactory = AgentFactory()
-        return agent_factory.init_agent(model, agent_factory.TRANSCRIBER, lang_code)
+        try:
+            return agent_factory.init_agent(model, AgentType.TRANSCRIBER, lang_code)
+        except FactoryError:
+            raise

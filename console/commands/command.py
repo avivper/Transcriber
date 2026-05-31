@@ -5,15 +5,17 @@ Abstract base and utilities for console commands.
 from abc import ABC, abstractmethod
 from console.app_state import AppState
 from functools import wraps
+from typing import Callable
 
-def requires_key(method: callable) -> callable:
+def requires_key(method: Callable) -> Callable:
     """
     Decorator that blocks execution and prints an error if the API key is not loaded.
     Used to protect commands that require Gemini API access.
     """
     @wraps(method)
     def wrapper(self, state: AppState, args: list[str]) -> None:
-        if state.api_key is None: 
+        """Checks for a loaded API key before delegating to the wrapped method."""
+        if state.api_key is None:
             print("Error: API key not loaded")
             return
         return method(self, state, args)

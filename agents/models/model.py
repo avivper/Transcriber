@@ -5,9 +5,16 @@ Provides high-level methods for file uploading, content generation, and error ha
 
 from google import genai
 from google.genai.errors import APIError
-from typing import Any, TypeAlias, Tuple
-import os 
-import time 
+from typing import Any, TypeAlias
+from enum import Enum
+import os
+import re
+import time
+
+class ProcessorType(Enum):
+    """Identifies the media type of a file being uploaded to the Gemini API."""
+    AUDIO = "audio"
+    TEXT = "text"
 
 # Type aliases for Gemini SDK components
 File: TypeAlias = genai.types.File
@@ -20,16 +27,14 @@ class Model:
     Main interface for interacting with Gemini models.
     Handles automated retries for rate limits and abstracts file polling logic.
     """
-    MODEL: str = "gemini-3.5-flash" # default model name
     MIME_TYPE: str = "audio/mpeg"
     PROCESSING: str = "PROCESSING"
     SECONDS_TO_SLEEP: int = 2
-    AUDIO_PROCESSOR: str = "audio"
-    TEXT_PROCESSOR: str = "text"
     RESOURCE_EXHAUSTED: int = 429
     MAX_RETRIES: int = 3
+    MAX_WAIT_SECONDS: int = 300
 
-    def __init__(self, api_key: str, prompt_path: str, model_type: str = MODEL) -> None:
+    def __init__(self, api_key: str, prompt_path: str, model_type: str) -> None:
         """
         Initializes the Gemini model wrapper.
         
@@ -40,15 +45,29 @@ class Model:
         """
         self.client: genai.Client = genai.Client(api_key=api_key)
         self.prompt: str = self._load_prompt_path(prompt_path)
-        self.model_type = model_type
+        self.model_type: str = model_type
 
     @staticmethod
     def load_prompt(path: str) -> str:
-        """Loads prompt text from a file."""
-        with open(path, "r", encoding="utf-8") as file:
-            return file.read()
+        """
+        Loads prompt text from a file.
 
-    def get_data_from_file(self, prompt: str, file: File) -> Tuple[str, int]: 
+        Args:
+            path: Absolute path to the prompt file.
+
+        Returns:
+            The file contents as a string.
+
+        Raises:
+            FileNotFoundError: If no file exists at the given path.
+        """
+        try:
+            with open(path, "r", encoding="utf-8") as file:
+                return file.read()
+        except FileNotFoundError:
+            raise
+
+    def get_data_from_file(self, prompt: str, file: File) -> tuple[str, int]:
         """
         Generates content from an uploaded file and then deletes the file from the API.
         
@@ -65,7 +84,7 @@ class Model:
         finally:
             self.client.files.delete(name=file.name)
     
-    def get_tokens_and_data(self, content: list[Any]) -> Tuple[str, int]:
+    def get_tokens_and_data(self, content: list[Any]) -> tuple[str, int]:
         """
         Executes a content generation request with automated retry logic for 429 errors.
         
@@ -75,7 +94,7 @@ class Model:
         Returns:
             A tuple of (result_text, tokens_used).
         """
-        retries = 0
+        retries: int = 0
         while retries < self.MAX_RETRIES:
             try:
                 response: GenerateContentResponse = self._get_content(content)
@@ -94,13 +113,11 @@ class Model:
                         print(f"Rate limit reached (429). Retrying in {wait_time}s... (Attempt {retries}/{self.MAX_RETRIES})")
                         time.sleep(wait_time)
                         continue
-                raise e
-        return ("", 0)
+                raise
 
     def _get_retry_delay(self, e: APIError) -> int:
         """Extracts retry delay from APIError details or defaults to 60s."""
         try:
-            import re
             match = re.search(r"retry in ([\d.]+)s", str(e))
             if match:
                 return int(float(match.group(1))) + 1
@@ -108,37 +125,51 @@ class Model:
             pass
         return 60
 
-    def upload_file_to_model(self, path: str, processor_type: str) -> File:
+    def upload_file_to_model(
+            self, path: str, processor_type: ProcessorType
+            ) -> File:
         """
         Uploads a file and waits until its processing state is complete.
-        
+
         Args:
             path: Local path to the file.
-            processor_type: Either 'audio' or 'text'.
-            
+            processor_type: Either AUDIO or TEXT, determines upload configuration.
+
         Returns:
             The processed Gemini File object.
+
+        Raises:
+            ValueError: If processor_type is not a recognized ProcessorType.
+            TimeoutError: If the file remains in PROCESSING state beyond MAX_WAIT_SECONDS.
         """
-        file: File = self._set_file_type_to_process(path, processor_type)
+        try:
+            file: File = self._set_file_type_to_process(path, processor_type)
+        except ValueError:
+            raise
+        start_time: float = time.time()
         while file.state.name == self.PROCESSING:
+            if time.time() - start_time > self.MAX_WAIT_SECONDS:
+                raise TimeoutError(
+                    f"Timed out waiting for file {file.name} to finish processing."
+                )
             time.sleep(self.SECONDS_TO_SLEEP)
             file = self.client.files.get(name=file.name)
         return file
     
-    def _set_file_type_to_process(self, path:str, processor_type: str) -> File:
+    def _set_file_type_to_process(self, path:str, processor_type: ProcessorType) -> File:
         """Configures and executes the file upload based on processor type."""
-        if (processor_type == self.AUDIO_PROCESSOR):
-            audio_file: File = self.client.files.upload(
+        if (processor_type is ProcessorType.AUDIO):
+            return self.client.files.upload(
                 file=path,
                 config=UploadFileConfig(mime_type=self.MIME_TYPE)
             )
-            return audio_file
-        elif (processor_type == self.TEXT_PROCESSOR):
-            text_file: File = self.client.files.upload(
+        elif (processor_type is ProcessorType.TEXT):
+            return self.client.files.upload(
                 file=path
-            )
-            return text_file 
-        return None
+                ) 
+        raise ValueError(
+            f"Unknown processor type: {processor_type}"
+        )
     
     def _get_content(self, content: list[Any]) -> GenerateContentResponse:
         """Calls the Gemini generate_content API."""
@@ -149,6 +180,21 @@ class Model:
             )
     
     def _load_prompt_path(self, prompt_path: str) -> str:
-        """Resolves the absolute path for a prompt file and loads its content."""
+        """
+        Resolves the absolute path for a prompt file and loads its content.
+
+        Args:
+            prompt_path: Path relative to this file's directory.
+
+        Returns:
+            The prompt file contents as a string.
+
+        Raises:
+            FileNotFoundError: If the resolved path does not point to an existing file.
+        """
         path: str = os.path.join(os.path.dirname(__file__), prompt_path)
-        return self.load_prompt(path)
+        try:
+            return self.load_prompt(path)
+        except FileNotFoundError as e:
+            print(f"{str(e)}")
+            raise

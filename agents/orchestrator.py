@@ -5,31 +5,35 @@ Contains decorators for dynamic prompt injection and language handling.
 
 import os
 from functools import wraps
-from typing import Any
+from typing import Any, Callable
 
-def language_prompt(func: callable) -> callable:
+
+def inject_prompt(template_en: str, template_he: str) -> Callable:
     """
-    Decorator that injects language-specific request prompts into agent methods.
-    
-    Determines the target language from the agent instance's 'language' attribute
-    and selects the appropriate instruction template for either transcription 
-    or translation tasks.
+    Decorator factory that generates a language-aware prompt injector.
     """
-    @wraps(func)
-    def wrapper(self, path: str):
-        lang: Any = getattr(self, "language", "en")
-        file_name: str = os.path.basename(path)
-        
-        transcribe_en: str = f"Transcribe the audio file: {file_name}"
-        transcribe_he: str = f"תמלל את קובץ השמע: {file_name}"
-        
-        translate_en: str = f"Translate the data of the file: {file_name}"
-        translate_he: str = f"תרגם את תוכן הקובץ: {file_name}"
-        
-        if func.__name__ == "_transcribe":
-            prompt = transcribe_he if lang == "he" else transcribe_en
-        else:
-            prompt = translate_he if lang == "he" else translate_en
-            
-        return func(self, path, prompt)
-    return wrapper
+    def decorator(func: Callable) -> Callable:
+        """Wraps the target method to inject a language-specific prompt."""
+        @wraps(func)
+        def wrapper(self, path: str, *args, **kwargs) -> Callable:
+            """Resolves the prompt from the file name and instance language, then delegates to the wrapped method."""
+            lang: Any = getattr(self, "language", "en")
+            file_name: str = os.path.basename(path)
+
+            template: str = template_he if lang == "he" else template_en
+            prompt: str = template.format(file_name=file_name)
+
+            return func(self, path, prompt, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+transcription_prompt: Callable = inject_prompt(
+    template_en="Transcribe the audio file: {file_name}",
+    template_he="תמלל את קובץ השמע: {file_name}"
+)
+
+translation_prompt: Callable = inject_prompt(
+    template_en="Translate the data of the file: {file_name}",
+    template_he="תרגם את תוכן הקובץ: {file_name}"
+)

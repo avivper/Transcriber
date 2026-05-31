@@ -22,5 +22,13 @@ class ModelFactory:
         self.model_type: str = model_type
 
     def init_llm_model(self) -> Model:
-        """Instantiates and returns a configured Model."""
+        """
+        Instantiates and returns a configured Model.
+
+        Returns:
+            A fully initialized Model instance.
+
+        Raises:
+            FileNotFoundError: If the prompt file at prompt_path cannot be found.
+        """
         return Model(self.api_key, self.prompt_path, self.model_type)
