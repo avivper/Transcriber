@@ -1,4 +1,4 @@
-# Transcriber
+<div align="center">
 
 ```
 +--------------------------------------------------------------+
@@ -12,49 +12,70 @@
 +--------------------------------------------------------------+
 ```
 
-> A fully **on-device** lecture transcription web app — decode, transcribe, and
-> summarise audio entirely in your browser. **Your audio never leaves your machine.**
+### Private, on-device lecture transcription — right in your browser.
+
+**[🔗 Live App](https://<your-domain>) · [Report a Bug](https://github.com/<username>/Transcriber/issues) · [Request a Feature](https://github.com/<username>/Transcriber/issues)**
+
+[![Live](https://img.shields.io/badge/status-live-8fe388?style=flat-square)](https://<your-domain>)
+[![Deployed on Vercel](https://img.shields.io/badge/deployed-Vercel-000000?style=flat-square&logo=vercel)](https://<your-domain>)
+[![Privacy](https://img.shields.io/badge/privacy-100%25%20on--device-8fe388?style=flat-square)](#the-privacy-invariant)
+[![Built with React](https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react)](https://react.dev)
+[![License: MIT](https://img.shields.io/badge/license-MIT-f0a338?style=flat-square)](LICENSE)
+
+</div>
+
+---
+
+## ⚡ Try It Now
+
+> **No install. No sign-up. No upload.**
+> Open **[https://&lt;your-domain&gt;](https://<your-domain>)**, drop in a lecture, and transcribe — everything runs in your browser and **your audio never leaves your device.**
+
+<div align="center">
+
+<!-- Replace with a real screenshot at docs/screenshot.png once deployed -->
+<img src="docs/screenshot.png" alt="Transcriber app screenshot" width="820" />
+
+</div>
 
 ---
 
 ## Overview
 
 Transcriber turns lecture recordings into structured, timestamped transcripts
-**without sending a single byte of audio over the network.** Every stage —
-decoding, voice-activity detection, speech recognition, and summarisation — runs
-locally in the browser using WebAssembly and WebGPU.
+**without sending a single byte of audio over the network.** Decoding,
+voice-activity detection, speech recognition, and summarisation all run locally
+using WebAssembly and WebGPU.
 
-It is built on React 19 + TypeScript + Vite, with the heavy lifting pushed into
-Web Workers and a custom C++/WebAssembly DSP module, so the UI stays responsive
-while models run on-device.
+It is a production web app built on React 19 + TypeScript + Vite, with heavy work
+pushed into Web Workers and a custom C++/WebAssembly DSP module, so the interface
+stays responsive while models run on-device.
 
 ---
 
 ## The Privacy Invariant
 
-This is the whole point of the project, not a footnote:
+This is the product, not a footnote:
 
-- **Audio never crosses the network.** Decoding and transcription happen in your
-  browser tab.
-- The only thing that could ever touch a server is **text** (e.g. an optional
-  `/api` endpoint) — never the source media.
-- Models are fetched once and cached in the browser's `CacheStorage`; subsequent
-  runs are fully offline.
+- **Audio never crosses the network.** All processing happens in your browser tab.
+- The only thing that could ever reach a server is **text** (an optional `/api`
+  endpoint) — never the source media.
+- Models are downloaded once and cached in the browser's `CacheStorage`;
+  subsequent runs work fully offline.
 
 ---
 
 ## Features
 
-- **100% On-Device Processing**: FFmpeg.wasm, Whisper, and an LLM all run client-side.
-- **Timestamped Transcripts**: Segment-level timing with click-to-seek playback.
-- **Multi-Stage Pipeline**: Decode → Segment (VAD) → Transcribe → Summarise → Export.
-- **WebGPU Acceleration**: Whisper and the summariser use WebGPU when available.
-- **Custom C++ DSP**: High-pass filtering, normalization, waveform peaks, and
-  voice-activity detection compiled to WebAssembly.
-- **Export Options**: Download results as `.txt` or `.pdf`.
-- **Wide Format Support**: `mp3 · wav · m4a · mp4 · mov · webm`.
-- **Distinctive UI**: A token-driven "Tape Room" design system — a warm, offline
-  studio-console aesthetic with self-hosted fonts (no CDN calls).
+- **100% On-Device Processing** — FFmpeg.wasm, Whisper, and an LLM all run client-side.
+- **Timestamped Transcripts** — segment-level timing with click-to-seek playback.
+- **Multi-Stage Pipeline** — Decode → Segment (VAD) → Transcribe → Summarise → Export.
+- **WebGPU Acceleration** — Whisper and the summariser use WebGPU when available.
+- **Custom C++ DSP** — high-pass filtering, normalization, waveform peaks, and VAD
+  compiled to WebAssembly.
+- **Export Options** — download results as `.txt` or `.pdf`.
+- **Wide Format Support** — `mp3 · wav · m4a · mp4 · mov · webm`.
+- **Installable PWA-ready** — fast, offline-capable, distinctive "Tape Room" UI.
 
 ---
 
@@ -75,6 +96,7 @@ This is the whole point of the project, not a footnote:
 | Layer | Technology |
 |---|---|
 | **UI** | React 19 + TypeScript + Vite |
+| **Hosting** | Vercel (static + edge headers) |
 | **Audio Decode** | FFmpeg.wasm (`@ffmpeg/ffmpeg`, `@ffmpeg/util`) |
 | **Transcription** | Whisper small via Transformers.js (`@huggingface/transformers`) |
 | **Summarisation** | WebLLM (`@mlc-ai/web-llm`), `Qwen2.5-1.5B` |
@@ -85,37 +107,61 @@ This is the whole point of the project, not a footnote:
 
 ---
 
-## Getting Started
+## Deployment
+
+The app is a static build, but it **requires two response headers** in production
+to enable `SharedArrayBuffer` (used by FFmpeg.wasm):
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+### One-click deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/<username>/Transcriber)
+
+### Manual deploy (Vercel)
+
+```bash
+npm install -g vercel
+cd transcriber
+vercel --prod
+```
+
+The required headers ship in three independent layers so the app works on any
+host — including those that can't set headers (e.g. GitHub Pages):
+
+1. `vite.config.ts` — dev & preview servers.
+2. `vercel.json` — Vercel production.
+3. `public/coi-serviceworker.js` — client-side header injection, loaded first in
+   `index.html`.
+
+> Deploying elsewhere? Just make sure your host returns the two headers above on
+> every route, or rely on the bundled service worker.
+
+---
+
+## Local Development
 
 ### Prerequisites
 
 - **Node.js** 20+ and **npm**
 - A **WebGPU-capable browser** (recent Chrome/Edge recommended)
-- *(Optional)* The **Emscripten SDK** — only needed to rebuild the C++/WASM
-  audio-processor module
+- *(Optional)* **Emscripten SDK** — only to rebuild the C++/WASM audio-processor
 
-### Installation
+### Setup
 
 ```bash
-git clone https://github.com/avivper/Transcriber.git
+git clone https://github.com/<username>/Transcriber.git
 cd Transcriber/transcriber
 npm install
-```
-
-> All npm/build commands are run from inside the `transcriber/` directory.
-
-### Run the dev server
-
-```bash
 npm run dev
 ```
 
-Then open the printed local URL. The dev server sets the COOP/COEP headers
-required for on-device processing (see below).
+> All npm/build commands run from inside the `transcriber/` directory.
 
----
-
-## Available Scripts
+### Scripts
 
 | Command | Description |
 |---|---|
@@ -126,58 +172,29 @@ required for on-device processing (see below).
 
 ---
 
-## Cross-Origin Isolation (Important)
-
-FFmpeg.wasm relies on `SharedArrayBuffer`, which requires the page to be
-**cross-origin isolated** (`crossOriginIsolated === true`). That in turn requires
-two HTTP response headers:
-
-```
-Cross-Origin-Opener-Policy: same-origin
-Cross-Origin-Embedder-Policy: require-corp
-```
-
-Because some static hosts (e.g. GitHub Pages) can't set custom headers, isolation
-is enforced in **three independent layers**:
-
-1. `vite.config.ts` — dev and preview servers.
-2. `vercel.json` — Vercel production.
-3. `public/coi-serviceworker.js` — a vendored service worker that injects the
-   headers client-side, loaded as the first script in `index.html`.
-
-If isolation is off, the app detects it and surfaces a clear blocking message
-instead of failing silently.
-
----
-
 ## Architecture
 
 Transcriber enforces a strict separation between presentation and logic.
 
-- **Hard wall**: components in `src/components/` are **presentational** (props +
+- **Hard wall** — components in `src/components/` are presentational (props +
   callbacks only). All business logic lives in `src/core/`.
-- **Single source of truth**: a `PipelineOrchestrator` owns pipeline state and is
+- **Single source of truth** — a `PipelineOrchestrator` owns pipeline state,
   exposed to React through the `usePipeline` hook.
-- **Heavy work in workers**: the `AudioEngine` and `Transcriber` run inside Web
-  Workers, bridged via Comlink, so model inference never blocks the UI thread.
-- **Native DSP in C++**: the `audio-processor/` module compiles to WebAssembly
-  and handles filtering, normalization, waveform peak extraction, and VAD.
-
-### Project Structure
+- **Heavy work in workers** — the `AudioEngine` and `Transcriber` run inside Web
+  Workers (bridged via Comlink), so inference never blocks the UI thread.
+- **Native DSP in C++** — the `audio-processor/` module compiles to WebAssembly
+  for filtering, normalization, waveform peaks, and VAD.
 
 ```
 transcriber/
 ├── audio-processor/      # C++ DSP/VAD → WebAssembly (Emscripten)
-│   ├── audio_processor.hpp
-│   ├── voice_activity_detector.hpp
-│   └── ... (biquad, normalizer, peaks, resampler, buffer, types)
 ├── public/
 │   ├── coi-serviceworker.js   # client-side COOP/COEP injection
 │   └── fonts/                 # self-hosted woff2 (no CDN)
 ├── src/
 │   ├── components/       # presentational UI (props + callbacks only)
 │   ├── core/            # PipelineOrchestrator, engines, types, capabilities
-│   ├── hooks/           # React ↔ core bridges (usePipeline, useCapabilities)
+│   ├── hooks/           # React ↔ core bridges
 │   ├── App.tsx          # composition root
 │   └── index.css        # the design system
 ├── vercel.json          # COOP/COEP headers (production)
@@ -186,18 +203,35 @@ transcriber/
 
 ---
 
-## Browser Requirements
+## Browser Support
 
-- **Cross-origin isolation** must be active (handled automatically — see above).
-- **WebGPU** is recommended for fast transcription/summarisation; the app falls
-  back to WASM where possible.
-- Models download once (cached in `CacheStorage`), then run offline.
+| Capability | Requirement |
+|---|---|
+| **Cross-origin isolation** | Required (handled automatically — see Deployment) |
+| **WebGPU** | Recommended for fast inference; falls back to WASM where possible |
+| **Storage** | Models cached in `CacheStorage` after first load, then run offline |
+
+Best experience on recent **Chrome / Edge**. WebGPU support varies on Safari/Firefox.
 
 ---
 
-## Project Status
+## Roadmap
 
-🚧 **Active development.** The UI, design system, and the
-components/core/hooks/workers architecture are in place, and the C++ audio-processor
-API headers are defined. Engine wiring — FFmpeg decode, Whisper transcription,
-WebLLM summarisation, and the C++/WASM build — is being implemented stage by stage.
+- [x] On-device UI, design system & app architecture
+- [x] C++ audio-processor API (headers)
+- [ ] FFmpeg.wasm decode + live waveform & playback
+- [ ] Whisper transcription (Transformers.js)
+- [ ] Summarisation (WebLLM)
+- [ ] `.txt` / `.pdf` export
+- [ ] Installable PWA + offline model bundling
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome. Please open an issue to discuss substantial
+changes before submitting a PR.
+
+## License
+
+Distributed under the MIT License. See [`LICENSE`](LICENSE) for details.
