@@ -29,12 +29,10 @@
 ## ⚡ Try It Now
 
 > **No install. No sign-up. No upload.**
-> Open **[https://&lt;your-domain&gt;](https://<your-domain>)**, drop in a lecture, and transcribe — everything runs in your browser and **your audio never leaves your device.**
+> Open **[https://&lt;your-domain&gt;](https://SOON)**, drop in a lecture, and transcribe — everything runs in your browser and **your audio never leaves your device.**
 
 <div align="center">
 
-<!-- Replace with a real screenshot at docs/screenshot.png once deployed -->
-<img src="docs/screenshot.png" alt="Transcriber app screenshot" width="820" />
 
 </div>
 
